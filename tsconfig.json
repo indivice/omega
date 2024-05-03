@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "declaration": true,
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "removeComments": true,
+    }
+}
