@@ -313,8 +313,10 @@ class WebRenderEngine {
                 if (createCache.has(item[0])) {
 
                     root.childNodes[item[1] - IndexPadding].replace(
-                        //@ts-ignore
-                        component.dynamic.callback(item[0], addressLookup[item[1]])
+                        this.BuildComponentTree(
+                            //@ts-ignore
+                            component.dynamic.callback(item[0], addressLookup[item[1]])
+                        )
                     )
 
                     createCache.delete(item[0])
