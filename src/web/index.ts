@@ -203,26 +203,24 @@ class WebRenderEngine {
     HandleLoop(component: Dynamic<Component[]>): HTMLElement {
 
         const state = component.dynamic.states[0].get()
-        let root
+        let root = this.BuildComponentTree(component.properties.__driver__.root)
 
-        const addressLookup = []
+        let addressLookup = []
 
-        root = this.BuildComponentTree(component.properties.__driver__.root)
-
-        let index = 0
+        let outerIndex = 0
 
         for (let item of state) {
 
-            addressLookup.push(new State(index))
+            addressLookup.push(new State(outerIndex))
 
             root.appendChild(
                 this.BuildComponentTree(
                     //@ts-ignore
-                    component.dynamic.callback(item, addressLookup[index])
+                    component.dynamic.callback(item, addressLookup[outerIndex])
                 )
             )
 
-            index++
+            outerIndex++
 
         } //initial build
 
@@ -253,6 +251,7 @@ class WebRenderEngine {
 
                 const fallback = this.BuildComponentTree(component.properties.__driver__.fallback)
                 root.appendChild(fallback)
+                addressLookup = []
 
                 return
 
@@ -310,24 +309,9 @@ class WebRenderEngine {
 
                 if (item[0] == undefined) continue
 
-                if (createCache.has(item[0])) {
-
-                    root.childNodes[item[1] - IndexPadding].replace(
-                        this.BuildComponentTree(
-                            //@ts-ignore
-                            component.dynamic.callback(item[0], addressLookup[item[1]])
-                        )
-                    )
-
-                    createCache.delete(item[0])
-
-                } else {
-
-                    root.childNodes[item[1] - IndexPadding].remove()
-                    addressLookup.splice(item[1] - IndexPadding, 1)
-                    IndexPadding++
-
-                }
+                addressLookup.splice(item[1] - IndexPadding, 1)
+                root.childNodes[item[1] - IndexPadding].remove()
+                IndexPadding++
 
             }
 
@@ -335,9 +319,9 @@ class WebRenderEngine {
 
                 if (item[0] == undefined) continue
 
-                addressLookup.splice(item[1], 0, new State(item[1]))
-
                 if (root.childNodes[item[1]] == undefined) {
+
+                    addressLookup.push(new State(item[1]))
 
                     root.appendChild(
                         this.BuildComponentTree(
@@ -348,7 +332,7 @@ class WebRenderEngine {
 
                 } else {
 
-                    addressLookup[item[1]] = new State(item[1])
+                    addressLookup[item[1]].set(item[1])
 
                     root.childNodes[item[1]].before(
                         this.BuildComponentTree(
@@ -360,11 +344,9 @@ class WebRenderEngine {
                 }
 
             }
-
         }
 
         component.dynamic.states[0].listen(HandleLoopStateChange)
-
         //@ts-ignore
         return root
 
