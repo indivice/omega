@@ -170,7 +170,8 @@ export type VideoAttributes = Partial<{
     muted: String | string | Dynamic<String | string>,
     poster: String | string | Dynamic<String | string>,
     preload: String | string | Dynamic<String | string>,
-    src: String | string | Dynamic<String | string>
+    src: String | string | Dynamic<String | string>,
+    playsinline: String | string | Dynamic<String | string>
 
 }>
 
