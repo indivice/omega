@@ -11,6 +11,7 @@ import { GlobalAttributes, ComponentIndex } from "./type"
 export type Property = {
 
     __driver__?: any,
+    ondestory?: () => any,
     children?: Component[],
     child?: Component,
     style?: {
@@ -133,7 +134,6 @@ export class State<T> {
 
         const prev = this.value
         this.value = value
-
         this.updateList.forEach(fx => fx(prev, value, undefined))
 
     }
@@ -142,6 +142,7 @@ export class State<T> {
 
         const prev = this.value
         this.value = callback(this.value)
+
         this.updateList.forEach(fx => fx(prev, this.value, undefined))
 
     }

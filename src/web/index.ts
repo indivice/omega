@@ -5,6 +5,7 @@ class WebRenderEngine {
 
     node: HTMLElement
     app: () => Component
+    renderContext: { element: HTMLElement, callback: () => any }[] = []
 
     /**
      * Priority order of processing childrens in omega web driver
@@ -16,6 +17,32 @@ class WebRenderEngine {
     constructor(node: HTMLElement, app: () => Component) {
 
         this.node = node; this.app = app
+
+    }
+
+    detectNodalChanges() {
+
+        const buildContext = () => {
+            let index = 0
+            for (let context of this.renderContext) {
+
+                if (!context.element.isConnected) {
+
+                    context.callback()
+
+                    //clear the said context element to garbage collect the node.
+                    this.renderContext.splice(index, 1)
+
+                }
+
+                index++
+
+            }
+
+            window.requestAnimationFrame(buildContext)
+        }
+
+        window.requestAnimationFrame(buildContext)
 
     }
 
@@ -38,13 +65,10 @@ class WebRenderEngine {
         for (let key of Object.keys(properties)) {
 
             if (properties[key] == "__ignore__" || properties[key] == undefined) continue //ignore the said property.
-            if (key == "children" || key == "child" || key == "__driver__") continue //they are not to be used here.
+            if (key == "children" || key == "child" || key == "__driver__" || key == "reference" || key == "ondestroy") continue //they are not to be used here.
 
             switch (key) {
 
-                case "reference":
-                    properties[key].set(element)
-                    break
                 case "style":
                     //either is an object or dynamic object
                     //@ts-ignore
@@ -363,7 +387,7 @@ class WebRenderEngine {
             if (condition.condition() == true) {
 
                 node = this.BuildComponentTree(
-                    condition.execute
+                    condition.execute()
                 )
 
                 currentConditionIndex = index
@@ -394,7 +418,7 @@ class WebRenderEngine {
                     if (currentConditionIndex != index) {
 
                         const newNode = this.BuildComponentTree(
-                            condition.execute
+                            condition.execute()
                         )
 
                         node.replaceWith(newNode)
@@ -418,8 +442,6 @@ class WebRenderEngine {
             if (gotMatch == false) {
 
                 const fallback = this.BuildComponentTree(component.properties.__driver__.fallback)
-
-                console.log([node, fallback])
 
                 node.replaceWith(fallback)
                 node = fallback
@@ -498,18 +520,31 @@ class WebRenderEngine {
             if (component.properties != undefined) {
 
                 this.HandleComponentProperties(element, component.properties)
-                if (checkChild == false) return //short-circuit logic
+                if (checkChild != false) { //short-circuit logic
 
-                else if (component.properties.child != undefined) {
+                    if (component.properties.child != undefined) {
 
-                    this.HandleComponentChildren(element, [component.properties.child])
+                        this.HandleComponentChildren(element, [component.properties.child])
 
+                    }
+
+                    else if (component.properties.children != undefined) {
+
+                        this.HandleComponentChildren(element, component.properties.children)
+
+                    }
                 }
 
-                else if (component.properties.children != undefined) {
+                if (component.properties != undefined) {
+                    if (component.properties.reference != undefined) {
+                        component.properties.reference.set(element)
+                    }
 
-                    this.HandleComponentChildren(element, component.properties.children)
-
+                    if (component.properties.ondestory != undefined) {
+                        this.renderContext.push({
+                            element, callback: component.properties.ondestory
+                        })
+                    }
                 }
 
             }
@@ -783,6 +818,8 @@ class WebRenderEngine {
     } //responsible for building a tree
 
     render() {
+
+        this.detectNodalChanges()
 
         this.node.append(
             this.BuildComponentTree(this.app())

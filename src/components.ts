@@ -46,7 +46,7 @@ export function $property<T>(states: State<any>[], builder: () => T) {
 
 export type When = {
     condition: () => boolean
-    execute: Component
+    execute: () => Component
 }
 
 export function $switch(states: State<any>[], conditions: When[], fallback: Component = Layout.Empty()) {
@@ -56,7 +56,7 @@ export function $switch(states: State<any>[], conditions: When[], fallback: Comp
 
 }
 
-export function $when(condition: () => boolean, execute: Component) {
+export function $when(condition: () => boolean, execute: () => Component) {
 
     return {
         condition, execute
@@ -94,15 +94,16 @@ export function $batch(batches: { state: State<any>, prev: any, newv: any }[]) {
     const batchMap = new Map<State<any>, { prev: any, newv: any }>()
 
     const callbacks = new Set<(prev: any, newv: any, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any>([
+
         ...batches.reduce((prev, item) => {
 
             batchMap.set(item.state, { prev: item.prev, newv: item.newv })
             return [...prev, ...item.state.updateList]
 
         }, [])
+
     ])
 
-    //@ts-ignore
     callbacks.forEach(fx => fx(null, null, batchMap))
 
 }
