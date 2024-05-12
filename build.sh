@@ -12,3 +12,7 @@ terser index.js --output index.js --keep_fnames
 cd ..
 cd ..
 cp -f ./src/package.json ./dist/package.json
+
+cd dist
+
+npm publish --access public
