@@ -122,7 +122,7 @@ export const $ignore = {
 }
 
 export type Styles = {
-    [P in keyof Partial<CSSStyleDeclaration>]: String | string
+    [P in keyof Partial<CSSStyleDeclaration & "viewTransitionName">]: String | string
 }
 
 function Column(properties: defaultPropertyType = {}) {

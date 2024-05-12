@@ -15,9 +15,9 @@ export type Property = {
     children?: Component[],
     child?: Component,
     style?: {
-        [P in keyof Partial<CSSStyleDeclaration>]: String | string | Dynamic<String | string>
+        [P in keyof Partial<CSSStyleDeclaration & "viewTransitionName">]: String | string | Dynamic<String | string>
     } | Dynamic<{
-        [P in keyof Partial<CSSStyleDeclaration>]: String | string
+        [P in keyof Partial<CSSStyleDeclaration & "viewTransitionName">]: String | string
     }>,
     reference?: State<any>,
 
