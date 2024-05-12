@@ -5,5 +5,8 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "removeComments": true,
-    }
+    },
+
+    "exclude": [ "./ts" ],
+    "include": [ "./src" ]
 }
