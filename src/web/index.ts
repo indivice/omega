@@ -540,9 +540,9 @@ class WebRenderEngine {
                         component.properties.reference.set(element)
                     }
 
-                    if (component.properties.ondestory != undefined) {
+                    if (component.properties.ondestroy != undefined) {
                         this.renderContext.push({
-                            element, callback: component.properties.ondestory
+                            element, callback: component.properties.ondestroy
                         })
                     }
                 }

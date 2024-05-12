@@ -11,7 +11,7 @@ import { GlobalAttributes, ComponentIndex } from "./type"
 export type Property = {
 
     __driver__?: any,
-    ondestory?: () => any,
+    ondestroy?: () => any,
     children?: Component[],
     child?: Component,
     style?: {
