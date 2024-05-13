@@ -7,6 +7,6 @@
         "removeComments": true,
     },
 
-    "exclude": [ "./ts" ],
+    "exclude": [ "./ts", "tests" ],
     "include": [ "./src" ]
 }

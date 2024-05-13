@@ -22,7 +22,7 @@ class WebRenderEngine {
 
     detectNodalChanges() {
 
-        const buildContext = () => {
+        const callback = () => {
             let index = 0
             for (let context of this.renderContext) {
 
@@ -39,10 +39,12 @@ class WebRenderEngine {
 
             }
 
-            window.requestAnimationFrame(buildContext)
+
+            window.requestAnimationFrame(callback)
+
         }
 
-        window.requestAnimationFrame(buildContext)
+        callback()
 
     }
 
@@ -297,26 +299,35 @@ class WebRenderEngine {
                     if (createCache.has(prev[index])) {
 
                         const prevIndex0 = createCache.get(prev[index])
-                        addressLookup[index].set(prevIndex0)
+                        //get the last item and assign that. (for duplicates)
+                        addressLookup[index].set(prevIndex0.pop())
 
-                        createCache.delete(prev[index])
+                        if (prevIndex0.length == 0) {
+                            createCache.delete(prev[index])
+                        } else {
+                            createCache.set(prev[index], prevIndex0)
+                        }
 
                     } else {
 
-                        removeCache.set(prev[index], index)
+                        removeCache.set(prev[index], [...(removeCache.get(prev[index]) || []), index])
 
                     }
 
                     if (removeCache.has(newv[index])) {
 
                         const prevIndex = removeCache.get(newv[index])
-                        addressLookup[prevIndex].set(index)
+                        addressLookup[prevIndex.pop()].set(index)
 
-                        removeCache.delete(newv[index])
+                        if (prevIndex.length == 0) {
+                            removeCache.delete(newv[index])
+                        } else {
+                            removeCache.set(newv[index], prevIndex)
+                        }
 
                     } else {
 
-                        createCache.set(newv[index], index)
+                        createCache.set(newv[index], [...(createCache.get(newv[index]) || []), index])
 
                     }
 
@@ -324,50 +335,75 @@ class WebRenderEngine {
 
             }
 
-            //do changes to the root accordingly.
-            let IndexPadding = 0
+            let removalSortedIndex = []
             for (let item of removeCache) {
-
-                //if the removal item has same index on the create item stack, they must
-                //just replace each other.
 
                 if (item[0] == undefined) continue
 
-                addressLookup.splice(item[1] - IndexPadding, 1)
-                root.childNodes[item[1] - IndexPadding].remove()
-                IndexPadding++
+                for (let ix of item[1]) {
+
+                    removalSortedIndex[ix] = ix
+
+                }
 
             }
 
-            for (let item of createCache) {
+            let indexPadding = 0
+            for (let ix of removalSortedIndex) {
 
-                if (item[0] == undefined) continue
+                if (ix == undefined) {
+                    continue
+                }
 
-                if (root.childNodes[item[1]] == undefined) {
+                addressLookup.splice(ix - indexPadding, 1)
+                root.childNodes[ix - indexPadding].remove()
+                indexPadding++
 
-                    addressLookup.push(new State(item[1]))
+            }
+
+            let createSortedIndex = []
+            let creationLookup = {} //has table construct (ofc)
+            for ( let item of createCache  ) {
+
+                if ( item[0] == undefined ) continue
+                for ( let ix of item[1] ) {
+
+                    creationLookup[ix] = item[0]
+                    createSortedIndex[ix] = ix
+
+                }
+
+            }
+
+            for (let pos of createSortedIndex) {
+                
+                if ( pos == undefined ) continue
+
+                if (root.childNodes[pos] == undefined) {
+
+                    addressLookup.push(new State(pos))
 
                     root.appendChild(
                         this.BuildComponentTree(
                             //@ts-ignore
-                            component.dynamic.callback(item[0], addressLookup[item[1]])
+                            component.dynamic.callback(creationLookup[pos], addressLookup[addressLookup.length - 1])
                         )
                     )
 
                 } else {
 
-                    addressLookup[item[1]].set(item[1])
+                    addressLookup[pos] = new State(pos)
 
-                    root.childNodes[item[1]].before(
+                    root.childNodes[pos].before(
                         this.BuildComponentTree(
                             //@ts-ignore
-                            component.dynamic.callback(item[0], addressLookup[item[1]])
+                            component.dynamic.callback(creationLookup[pos], addressLookup[pos])
                         )
                     )
 
                 }
-
             }
+
         }
 
         component.dynamic.states[0].listen(HandleLoopStateChange)
