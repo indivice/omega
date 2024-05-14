@@ -363,10 +363,10 @@ class WebRenderEngine {
 
             let createSortedIndex = []
             let creationLookup = {} //has table construct (ofc)
-            for ( let item of createCache  ) {
+            for (let item of createCache) {
 
-                if ( item[0] == undefined ) continue
-                for ( let ix of item[1] ) {
+                if (item[0] == undefined) continue
+                for (let ix of item[1]) {
 
                     creationLookup[ix] = item[0]
                     createSortedIndex[ix] = ix
@@ -376,8 +376,8 @@ class WebRenderEngine {
             }
 
             for (let pos of createSortedIndex) {
-                
-                if ( pos == undefined ) continue
+
+                if (pos == undefined) continue
 
                 if (root.childNodes[pos] == undefined) {
 
@@ -589,6 +589,22 @@ class WebRenderEngine {
         switch (component.name) {
 
             //----------------------System Components----------------------//
+
+            case ComponentIndex.Portal:
+                try {
+
+                    element = document.querySelector(component.properties.__driver__.__portal__.selector)
+                    element.appendChild(
+                        this.BuildComponentTree(component.properties.__driver__.__portal__.app)
+                    )
+                    
+                } catch(e) {
+
+                    console.warn("Invalid Portal Configurations. Please use the Layout.Portal component")
+
+                }
+
+                return document.createComment('portal')
 
             case ComponentIndex.__driver__:
                 console.warn(`Component __driver__ (Index ${component.name})\ndoes not have any use in context of omegaUI official web driver`)
