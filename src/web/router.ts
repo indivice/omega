@@ -48,13 +48,12 @@ export const Router = {
 
         //the router state works as history.
         //we will just pick the last item from the stack and that's it!.
-        let lastItem = routerState.get()
 
         return $switch([routerState], [
 
             ...Object.keys(routes).map((route) => {
 
-                return $when(() => lastItem.route === route, () => routes[route]( lastItem.data ))
+                return $when(() => routerState.get().route === route, () => routes[route]( routerState.get().data ))
 
             })
 
@@ -67,4 +66,3 @@ export const Router = {
     }
 
 }
-
