@@ -178,7 +178,7 @@ View.$builder = <T>({ each, properties = {}, builder, fallback = Layout.Empty() 
 
 export const Layout = {
 
-    Portal: ({ selector, component }: { selector: string, component: () => Component }) => {
+    Portal: ({ selector, component }: { selector: string, component: Component }) => {
 
         return new Component(ComponentIndex.Portal, DriverUtility.createPortal(selector, component))
 

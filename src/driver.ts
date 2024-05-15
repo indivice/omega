@@ -37,7 +37,7 @@ export const DriverUtility = {
 
     },
     
-    createPortal(selector: string, app: () => Component) {
+    createPortal(selector: string, app: Component) {
 
         return {
             __driver__: {
