@@ -1,7 +1,7 @@
 import { $switch, $when, Content, Layout } from "../components"
 import { Component, State } from "../index"
 
-export class $virtualRouter {
+export class VirtualRouter {
 
     pointer = 0
     instance: State<{ route: string, data: any }>
@@ -42,7 +42,7 @@ export class $virtualRouter {
 
 }
 
-export class $browserRouter {
+export class BrowserRouter {
 
     instance: State<Location> = new State<Location>(window.location)
 
@@ -140,13 +140,13 @@ const Utility = {
 
         const obj = {
             args: {},
-            GET: {}
+            get: {}
         }
         const URLObj = new URL(url)
 
         URLObj.searchParams.forEach((v, k) => {
 
-            obj.GET[k] = v
+            obj.get[k] = v
 
         })
 

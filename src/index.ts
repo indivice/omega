@@ -88,6 +88,31 @@ export class State<T> {
 
                 $batch(batches)
 
+            },
+
+            get(): { [ P in keyof StoreType ]: StoreType[P] } {
+
+                //@ts-ignore
+                const data: { [ P in keyof StoreType ]: StoreType[P] } = {}
+                
+                for ( let key of Object.keys(storeData) ) {
+
+                    data[key] = storeData[key].get()
+
+                }
+
+                return data
+
+            },
+
+            listen(fx: (prev: any, newv: any, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) {
+
+                for ( let _state of Object.keys(storeData) ) {
+
+                    storeData[_state].listen(fx)
+
+                }
+
             }
 
         }
