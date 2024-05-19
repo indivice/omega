@@ -4,23 +4,23 @@ import { Component, State } from "../index"
 export class $virtualRouter {
 
     pointer = 0
-    instance: State<{route: string, data: any}>
-    histroy: State<{route: string, data: any}[]> = new State<{route: string, data: any}[]>([])
+    instance: State<{ route: string, data: any }>
+    histroy: State<{ route: string, data: any }[]> = new State<{ route: string, data: any }[]>([])
 
     constructor(initial: string, data: any) {
         this.instance = new State({ route: initial, data })
-        this.histroy.update(routes => [ ...routes, { route: initial, data } ])
+        this.histroy.update(routes => [...routes, { route: initial, data }])
     }
 
     navigate(url: string, data: any) {
         this.pointer++
         this.instance.set({ route: url, data })
-        this.histroy.update(routes => [ ...routes, { route: url, data } ]) 
+        this.histroy.update(routes => [...routes, { route: url, data }])
     }
 
     back() {
         let latest = this.histroy.get()
-        if ( latest[--this.pointer] != undefined ) {
+        if (latest[--this.pointer] != undefined) {
 
             this.instance.set(
                 latest[this.pointer]
@@ -31,7 +31,7 @@ export class $virtualRouter {
 
     forward() {
         let latest = this.histroy.get()
-        if ( latest[++this.pointer] != undefined ) {
+        if (latest[++this.pointer] != undefined) {
 
             this.instance.set(
                 latest[this.pointer]
@@ -52,7 +52,7 @@ export class $browserRouter {
 
             const data = new URL(window.location.toString())
 
-                data.searchParams.values().next()
+            data.searchParams.values().next()
 
         })
 
@@ -72,16 +72,85 @@ export class $browserRouter {
 
 const Utility = {
 
-    parseSearchParams(url: string) {
+    //Does not require any complex REGEX pattern matching
+    //because uses loops to compare simple statements.
+    /**
+     * NOTE: Make sure URL is well formed, and not worse.
+     */
+    doesPathnameMatch(pathname, pattern) {
+        // Split the pathname and pattern into segments
+        const pathSegments = pathname.split('/');
+        const patternSegments = pattern.split('/');
 
-        const obj = {}
+        // Check if the number of segments is less than or equal to pattern segments (considering optional segments)
+        if (pathSegments.length < patternSegments.length) {
+            return false; // Not enough segments
+        }
+
+        // Loop through each segment pair (pathname and pattern)
+        for (let i = 0; i < patternSegments.length; i++) {
+            const pathSegment = pathSegments[i];
+            const patternSegment = patternSegments[i];
+
+            // Check for variable pattern
+            if (patternSegment.startsWith('$')) {
+                // Optional variable segment, skip comparison
+                continue;
+            } else if (pathSegment !== patternSegment) {
+                return false; // No match
+            }
+        }
+
+        // All segments matched (including optional ones)
+        return true;
+    },
+
+    matchPathname(pathname, pattern) {
+        // Split the pathname and pattern into segments
+        const pathSegments = pathname.split('/');
+        const patternSegments = pattern.split('/');
+
+        // Check if the number of segments is less than or equal to pattern segments
+        if (pathSegments.length < patternSegments.length) {
+            return null; // Not enough segments
+        }
+
+        // Create an object to store captured variables
+        const variables = {};
+
+        // Loop through each segment
+        for (let i = 0; i < patternSegments.length; i++) {
+            const pathSegment = pathSegments[i];
+            const patternSegment = patternSegments[i];
+
+            // Check for variable pattern
+            if (patternSegment.startsWith('$')) {
+                const variableName = patternSegment.slice(1);
+                variables[variableName] = pathSegment;
+            } else if (pathSegment !== patternSegment) {
+                return null; // No match
+            }
+        }
+
+        // Return the callback arguments with captured variables
+        return variables; // Modify based on your actual callback arguments
+    },
+
+    parseSearchParams(url: string, route: string) {
+
+        const obj = {
+            args: {},
+            GET: {}
+        }
         const URLObj = new URL(url)
 
         URLObj.searchParams.forEach((v, k) => {
 
-            obj[k] = v
+            obj.GET[k] = v
 
         })
+
+        obj.args = Utility.matchPathname(URLObj.pathname, route)
 
         return obj
 
@@ -100,7 +169,7 @@ const Utility = {
                         fontSize: "24px",
                         fontWeight: "bold",
                     },
-                    child: 
+                    child:
                         Content.Text("404 : Route not found")
                 }),
                 Content.Text("If you wish a custom error route, provide an errorPath: Component")
@@ -122,7 +191,7 @@ export const Router = {
 
             ...Object.keys(routes).map((route) => {
 
-                return $when(() => routerState.get().route === route, () => routes[route]( routerState.get().data ))
+                return $when(() => routerState.get().route === route, () => routes[route](routerState.get().data))
 
             })
 
@@ -136,7 +205,7 @@ export const Router = {
 
             ...Object.keys(routes).map(route => {
 
-                return $when(() => routerState.get().pathname == route, () => routes[route](Utility.parseSearchParams(routerState.get().toString())))
+                return $when(() => Utility.doesPathnameMatch(routerState.get().pathname, route), () => routes[route](Utility.parseSearchParams(routerState.get().toString(), route)))
 
             })
 

@@ -13,6 +13,6 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
-    "@indivice/omega": "^0.0.0-alpha-13"
+    "@indivice/omega": "^0.0.0-alpha-13E"
   }
 }
