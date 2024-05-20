@@ -488,6 +488,10 @@ class WebRenderEngine {
 
         }
 
+        //call it once, to make sure the conditions have not changed before the state was updated to
+        //recieve listener
+        ListenSwitch()
+
         for (let state of component.dynamic.states) {
 
             state.listen(ListenSwitch)
@@ -517,6 +521,9 @@ class WebRenderEngine {
 
         }
 
+        //if it has state changes, it won't be able to detect it immediatly.
+        HandleTextNodeChange()
+
         for (let state of component.dynamic.states) {
             state.listen(HandleTextNodeChange)
         }
@@ -537,6 +544,10 @@ class WebRenderEngine {
             node = nxNode
 
         }
+
+        //this is because if the root level contains state change, it will not be able to detect that
+        //immediately
+        HandleNodeChange()
 
         for (let state of component.dynamic.states) {
             state.listen(HandleNodeChange)
