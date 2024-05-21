@@ -12,6 +12,7 @@ terser index.js --output index.js --keep_fnames
 cd ..
 cd ..
 cp -f ./src/package.json ./dist/package.json
+cp -f ./README.md ./dist/README.md
 
 cd dist
 

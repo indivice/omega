@@ -199,7 +199,7 @@ export const Router = {
 
     },
 
-    Browser({ routerState, routes, errorPath = Utility.defaultErrorPath() }: { routerState: State<Location>, routes: { [key: string]: <T>(data: T) => Component }, errorPath?: Component }) {
+    Browser({ routerState, routes, errorPath = Utility.defaultErrorPath() }: { routerState: State<Location>, routes: { [key: string]: (data: { args: any, get: any }) => Component }, errorPath?: Component }) {
 
         return $switch([routerState], [
 
@@ -212,5 +212,4 @@ export const Router = {
         ], errorPath)
 
     }
-
 }

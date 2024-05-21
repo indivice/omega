@@ -1,11 +1,12 @@
 {
 	"name": "@indivice/omega",
-	"version": "0.0.0-alpha-14",
+	"version": "0.0.0-alpha-14E",
 	"description": "The language of modern user interfaces",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
+	"repository": {"url": "https://github.com/indivice/omega"},
 	"author": "Mayukh Chakraborty",
 	"license": "MIT"
 }
