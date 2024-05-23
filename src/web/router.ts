@@ -204,7 +204,7 @@ export const Router = {
 
     },
 
-    Browser({ middlewires = [], routerState, routes, errorPath = Utility.defaultErrorPath() }: { middlewires?: ((route: string, data: { args: any, get: any }) => any)[], routerState: State<Location>, routes: { [key: string]: (data: { args: any, get: any }) => Component }, errorPath?: Component }) {
+    Browser({ middlewires = [], routerState, routes, errorPath = Utility.defaultErrorPath() }: { middlewires?: ((route: string, data: { args: any, get: any }) => boolean)[], routerState: State<Location>, routes: { [key: string]: (data: { args: any, get: any }) => Component }, errorPath?: Component }) {
 
         return $switch([routerState], [
 
@@ -216,7 +216,8 @@ export const Router = {
 
                     //middlewires to be executed before all routes.
                     for ( let fx of middlewires ) {
-                        fx( route, data )
+                        const status = fx( route, data )
+                        if ( status != true ) break
                     }
 
                     return routes[route](data)
