@@ -6,7 +6,9 @@ import {
     ImageAttributes, InputAttributes,
     LinkAttributes, MediaSourceAttributes,
     MultiMediaAttributes, ComponentIndex,
-    Events, VideoAttributes
+    Events, VideoAttributes,
+    FormAttributes,
+    LabelAttributes
 }
     from "./type"
 
@@ -176,6 +178,17 @@ View.$builder = <T>({ each, properties = {}, builder, fallback = Layout.Empty() 
 
 }
 
+function Form(prorperties: defaultPropertyType & FormAttributes = {}) {
+    return new Component(ComponentIndex.Form, prorperties)
+}
+
+Form.$builder = <T>({ each, properties = {}, builder, fallback = Layout.Empty() }: { each: State<T[]>, properties?: defaultPropertyType, builder: ( value: T, index: State<number> ) => Component, fallback?: Component }) => {
+
+    //@ts-ignore
+    return new Dynamic<Component[]>(builder, [each], { context: 'loop', root: Form(properties), fallback })
+
+}
+
 export const Layout = {
 
     Portal: ({ selector, component }: { selector: string, component: Component }) => {
@@ -188,12 +201,13 @@ export const Layout = {
     Row,
     Grid,
     View,
+    Form,
 
     Empty: () => {
 
         return new Component(ComponentIndex.__empty__, {})
 
-    }
+    },
 
 }
 
@@ -317,7 +331,7 @@ export const Content = {
 
     },
 
-    Label: (properties: defaultPropertyType = {}) => {
+    Label: (properties: defaultPropertyType & LabelAttributes = {}) => {
 
         return new Component(ComponentIndex.Label, properties)
 

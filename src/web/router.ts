@@ -180,6 +180,11 @@ const Utility = {
 
 }
 
+//conditionals are safe to be used in routes, because re-routing causes the entire
+//funtion to run.
+
+//Hence, also make sure that your function does proper cleanup if there is any to be cleaned.
+
 export const Router = {
 
     Virtual({ routerState, routes, errorPath = Utility.defaultErrorPath() }: { routerState: State<{ route: string, data: any }>, routes: { [key: string]: <T>(data: T) => Component }, errorPath?: Component }) {
@@ -199,13 +204,23 @@ export const Router = {
 
     },
 
-    Browser({ routerState, routes, errorPath = Utility.defaultErrorPath() }: { routerState: State<Location>, routes: { [key: string]: (data: { args: any, get: any }) => Component }, errorPath?: Component }) {
+    Browser({ middlewires = [], routerState, routes, errorPath = Utility.defaultErrorPath() }: { middlewires?: ((route: string, data: { args: any, get: any }) => any)[], routerState: State<Location>, routes: { [key: string]: (data: { args: any, get: any }) => Component }, errorPath?: Component }) {
 
         return $switch([routerState], [
 
             ...Object.keys(routes).map(route => {
 
-                return $when(() => Utility.doesPathnameMatch(routerState.get().pathname, route), () => routes[route](Utility.parseSearchParams(routerState.get().toString(), route)))
+                return $when(() => Utility.doesPathnameMatch(routerState.get().pathname, route), () => {
+
+                    const data = Utility.parseSearchParams(routerState.get().toString(), route)
+
+                    //middlewires to be executed before all routes.
+                    for ( let fx of middlewires ) {
+                        fx( route, data )
+                    }
+
+                    return routes[route](data)
+                })
 
             })
 

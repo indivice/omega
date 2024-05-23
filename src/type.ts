@@ -18,6 +18,7 @@ export enum ComponentIndex {
         GridView,
         View,
         __empty__,
+        Form,
 
         //inputs
         Link,
@@ -57,7 +58,7 @@ export enum ComponentIndex {
 
         //new component
         //media type
-        Canvas
+        Canvas,
 
 }
 
@@ -68,7 +69,7 @@ export type GlobalAttributes = {
     autofocus: String | string | Dynamic<String | string>,
     class: String | string | Dynamic<String | string>,
     contenteditable: String | string | Dynamic<String | string>,
-    data$: String | string | Dynamic<String | string>,
+    "data-*": String | string | Dynamic<String | string>,
     dir: String | string | Dynamic<String | string>,
     draggable: String | string | Dynamic<String | string>,
     enterkeyhint: String | string | Dynamic<String | string>,
@@ -229,6 +230,24 @@ export type DropdownItemAttributes = Partial<{
     selected: String | string | Dynamic<String | string>,
     value: String | string | Dynamic<String | string>
 
+}>
+
+export type LabelAttributes = Partial<{
+    for: String | string | Dynamic<String | string>
+}>
+
+export type FormAttributes = Partial<{
+    accept: String | string | Dynamic<String | string>,
+    acceptcharset: String | string | Dynamic<String | string>,
+    autocapitalize: String | string | Dynamic<String | string>,
+    autocomplete: String | string | Dynamic<String | string>,
+    name: String | string | Dynamic<String | string>,
+    rel: String | string | Dynamic<String | string>,
+    action: String | string | Dynamic<String | string>,
+    enctype: String | string | Dynamic<String | string>,
+    method: String | string | Dynamic<String | string>,
+    novalidate: String | string | Dynamic<String | string>,
+    target: String | string | Dynamic<String | string>
 }>
 
 export type Events<EventType> = {

@@ -658,6 +658,12 @@ class WebRenderEngine {
             case ComponentIndex.__empty__:
                 return document.createComment('EM')
 
+            case ComponentIndex.Form:
+                element = document.createElement('form')
+                handleComponentMetaData()
+
+                return element
+
             case ComponentIndex.View:
                 element = document.createElement('div')
                 handleComponentMetaData()
