@@ -47,25 +47,14 @@ export class BrowserRouter {
     instance: State<Location> = new State<Location>(window.location)
 
     constructor() {
-
-        this.instance.listen(() => {
-
-            const data = new URL(window.location.toString())
-
-            data.searchParams.values().next()
-
-        })
-
         window.onpopstate = () => {
             this.instance.set(window.location)
         }
     }
 
     navigate(url: string) {
-
         window.history.pushState(undefined, undefined, url)
         this.instance.set(window.location)
-
     }
 
 }

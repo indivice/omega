@@ -1,6 +1,6 @@
 {
 	"name": "@indivice/omega",
-	"version": "0.0.0-alpha-15E",
+	"version": "0.0.0-alpha-16",
 	"description": "The language of modern user interfaces",
 	"main": "index.js",
 	"scripts": {
