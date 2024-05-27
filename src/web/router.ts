@@ -1,64 +1,6 @@
 import { $switch, $when, Content, Layout } from "../components"
 import { Component, State } from "../index"
 
-export class VirtualRouter {
-
-    pointer = 0
-    instance: State<{ route: string, data: any }>
-    histroy: State<{ route: string, data: any }[]> = new State<{ route: string, data: any }[]>([])
-
-    constructor(initial: string, data: any) {
-        this.instance = new State({ route: initial, data })
-        this.histroy.update(routes => [...routes, { route: initial, data }])
-    }
-
-    navigate(url: string, data: any) {
-        this.pointer++
-        this.instance.set({ route: url, data })
-        this.histroy.update(routes => [...routes, { route: url, data }])
-    }
-
-    back() {
-        let latest = this.histroy.get()
-        if (latest[--this.pointer] != undefined) {
-
-            this.instance.set(
-                latest[this.pointer]
-            )
-
-        }
-    }
-
-    forward() {
-        let latest = this.histroy.get()
-        if (latest[++this.pointer] != undefined) {
-
-            this.instance.set(
-                latest[this.pointer]
-            )
-
-        }
-    }
-
-}
-
-export class BrowserRouter {
-
-    instance: State<Location> = new State<Location>(window.location)
-
-    constructor() {
-        window.onpopstate = () => {
-            this.instance.set(window.location)
-        }
-    }
-
-    navigate(url: string) {
-        window.history.pushState(undefined, undefined, url)
-        this.instance.set(window.location)
-    }
-
-}
-
 const Utility = {
 
     //Does not require any complex REGEX pattern matching
@@ -169,42 +111,114 @@ const Utility = {
 
 }
 
-//conditionals are safe to be used in routes, because re-routing causes the entire
-//funtion to run.
+export class VirtualRouter {
 
-//Hence, also make sure that your function does proper cleanup if there is any to be cleaned.
+    pointer = 0
+    instance: State<{ route: string, data: any }>
+    histroy: State<{ route: string, data: any }[]> = new State<{ route: string, data: any }[]>([])
 
-export const Router = {
+    constructor(initial: string, data: any) {
+        this.instance = new State({ route: initial, data })
+        this.histroy.update(routes => [...routes, { route: initial, data }])
+    }
 
-    Virtual({ routerState, routes, errorPath = Utility.defaultErrorPath() }: { routerState: State<{ route: string, data: any }>, routes: { [key: string]: <T>(data: T) => Component }, errorPath?: Component }) {
+    navigate(url: string, data: any) {
+        this.pointer++
+        this.instance.set({ route: url, data })
+        this.histroy.update(routes => [...routes, { route: url, data }])
+    }
+
+    back() {
+        let latest = this.histroy.get()
+        if (latest[--this.pointer] != undefined) {
+
+            this.instance.set(
+                latest[this.pointer]
+            )
+
+        }
+    }
+
+    forward() {
+        let latest = this.histroy.get()
+        if (latest[++this.pointer] != undefined) {
+
+            this.instance.set(
+                latest[this.pointer]
+            )
+
+        }
+    }
+    
+    Component({ middlewares, routes, errorPath = Utility.defaultErrorPath() }: 
+    { 
+        middlewares?: (<T>(route: String, data: T) => boolean)[]
+        routes: { [key: string]: <T>(data: T) => Component }, 
+        errorPath?: Component 
+
+    }) {
 
         //the router state works as history.
         //we will just pick the last item from the stack and that's it!.
 
-        return $switch([routerState], [
+        return $switch([this.instance], [
 
             ...Object.keys(routes).map((route) => {
 
-                return $when(() => routerState.get().route === route, () => routes[route](routerState.get().data))
+                return $when(() => Utility.doesPathnameMatch(this.instance.get(), route), () => {
+
+                    const instanceData = this.instance.get().data
+
+                    for ( let fx of middlewares ) {
+                        const status = fx( route, instanceData )
+                        if ( status != true ) break
+                    }
+
+                    return routes[route](instanceData)
+
+                })
 
             })
 
         ], errorPath)
 
-    },
+    }
+}
 
-    Browser({ middlewires = [], routerState, routes, errorPath = Utility.defaultErrorPath() }: { middlewires?: ((route: string, data: { args: any, get: any }) => boolean)[], routerState: State<Location>, routes: { [key: string]: (data: { args: any, get: any }) => Component }, errorPath?: Component }) {
+export class BrowserRouter {
 
-        return $switch([routerState], [
+    instance: State<Location> = new State<Location>(window.location)
+
+    constructor() {
+        window.onpopstate = () => {
+            this.instance.set(window.location)
+        }
+    }
+
+    navigate(url: string) {
+        window.history.pushState(undefined, undefined, url)
+        this.instance.set(window.location)
+    }
+
+
+    Browser({ middlewares = [], routes, errorPath = Utility.defaultErrorPath() }: 
+    { 
+        middlewares?: ((route: string, data: { args: any, get: any }) => boolean)[],
+        routes: { [key: string]: (data: { args: any, get: any }) => Component }, 
+        errorPath?: Component,
+    
+    }) {
+
+        return $switch([this.instance], [
 
             ...Object.keys(routes).map(route => {
 
-                return $when(() => Utility.doesPathnameMatch(routerState.get().pathname, route), () => {
+                return $when(() => Utility.doesPathnameMatch(this.instance.get().pathname, route), () => {
 
-                    const data = Utility.parseSearchParams(routerState.get().toString(), route)
+                    const data = Utility.parseSearchParams(this.instance.get().toString(), route)
 
-                    //middlewires to be executed before all routes.
-                    for ( let fx of middlewires ) {
+                    //middlewares to be executed before all routes.
+                    for ( let fx of middlewares ) {
                         const status = fx( route, data )
                         if ( status != true ) break
                     }
@@ -217,4 +231,5 @@ export const Router = {
         ], errorPath)
 
     }
+
 }

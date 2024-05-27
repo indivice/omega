@@ -239,6 +239,7 @@ class WebRenderEngine {
 
             addressLookup.push(new State(outerIndex))
 
+            //must be appendChild because it is a simple loop
             root.appendChild(
                 this.BuildComponentTree(
                     //@ts-ignore
@@ -605,7 +606,7 @@ class WebRenderEngine {
                 try {
 
                     element = document.querySelector(component.properties.__driver__.__portal__.selector)
-                    element.appendChild(
+                    element.append(
                         this.BuildComponentTree(component.properties.__driver__.__portal__.app)
                     )
                     
