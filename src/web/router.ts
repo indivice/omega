@@ -150,16 +150,18 @@ export class VirtualRouter {
         }
     }
     
-    Component({ middlewares, routes, errorPath = Utility.defaultErrorPath() }: 
+    Component({ middlewares, routes = {}, errorPath = Utility.defaultErrorPath(), cachedRoutes = {} }: 
     { 
         middlewares?: (<T>(route: String, data: T) => boolean)[]
-        routes: { [key: string]: <T>(data: T) => Component }, 
+        routes?: { [key: string]: <T>(data: T) => Component },
+        cachedRoutes?: { [key: string]: (data: State<{ args: any, get: any }>) => Component },
         errorPath?: Component 
 
     }) {
 
         //the router state works as history.
         //we will just pick the last item from the stack and that's it!.
+        const cache = new Map<string, { component: Component, data: State<any> }>()
 
         return $switch([this.instance], [
 
@@ -175,6 +177,33 @@ export class VirtualRouter {
                     }
 
                     return routes[route](instanceData)
+
+                })
+
+            }),
+
+            ...Object.keys(cachedRoutes).map((route) => {
+
+                return $when(() => Utility.doesPathnameMatch(this.instance.get(), route), () => {
+
+                    if ( cache.has(route) ) {
+
+                        const cachedData = cache.get(route)
+                        cachedData.data.set(
+                            this.instance.get().data
+                        )
+                        return cachedData.component
+
+                    }
+
+                    //if cache does not have the route
+                    const data = this.instance.get().data
+                    cache.set(route, {
+                        component: cachedRoutes[route](data),
+                        data
+                    })
+
+                    return cache.get(route).component
 
                 })
 
@@ -201,13 +230,16 @@ export class BrowserRouter {
     }
 
 
-    Browser({ middlewares = [], routes, errorPath = Utility.defaultErrorPath() }: 
+    Component({ middlewares = [], routes = {}, errorPath = Utility.defaultErrorPath(), cachedRoutes = {} }: 
     { 
         middlewares?: ((route: string, data: { args: any, get: any }) => boolean)[],
-        routes: { [key: string]: (data: { args: any, get: any }) => Component }, 
+        routes?: { [key: string]: (data: { args: any, get: any }) => Component },
+        cachedRoutes?: { [key: string]: (data: State<{ args: any, get: any }>) => Component },
         errorPath?: Component,
     
     }) {
+
+        const cache = new Map<string, { component: Component, data: State<{ args: any, get: any }> }>()
 
         return $switch([this.instance], [
 
@@ -224,6 +256,35 @@ export class BrowserRouter {
                     }
 
                     return routes[route](data)
+                })
+
+            }),
+
+            //It caches the function, then uses state to update the get and args instead of
+            //recalling with new values.
+            ...Object.keys(cachedRoutes).map(route => {
+
+                return $when(() => Utility.doesPathnameMatch(this.instance.get().pathname, route), () => {
+
+                    if ( cache.has(route) ) {
+
+                        const cachedData = cache.get(route)
+                        cachedData.data.set(
+                            Utility.parseSearchParams(this.instance.get().toString(), route)
+                        )
+                        return cachedData.component
+
+                    }
+
+                    //if cache does not have the route
+                    const data = new State(Utility.parseSearchParams(this.instance.get().toString(), route))
+                    cache.set(route, {
+                        component: cachedRoutes[route](data),
+                        data
+                    })
+
+                    return cache.get(route).component
+
                 })
 
             })
