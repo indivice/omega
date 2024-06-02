@@ -41,8 +41,12 @@ export class Component {
 
 }
 
+//recursive typing for children updater. Infact, I believe I will need a recursive typing for 
+//the normal one as well.
+export type StoreUpdater<T> = { [ P in keyof T ]: T[P] extends object ? Partial<StoreUpdater<T[P]>> : T[P] }
+
 export type Store<T extends object> = {
-    update: (updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<{ [ P in keyof T ]: T[P] extends object ? Partial<T[P]>: T[P] }>) => void,
+    update: (updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<StoreUpdater<T>>) => void,
     listen: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) => Function,
     removeListener: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) => Map<State<any> | Store<any>, boolean>,
     get: () => { [ P in keyof T ]: T[P] }
@@ -76,7 +80,7 @@ export function Store<T extends object>(initial: T): Store<T> {
 
     return {
         ...$,
-        update(updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<{ [ P in keyof T ]: T[P] extends object ? Partial<T[P]>: T[P] }>) {
+        update(updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<StoreUpdater<T>>) {
 
             //update based on states or Store.
             const batches = []
