@@ -217,11 +217,14 @@ export class VirtualRouter {
 export class BrowserRouter {
 
     instance: State<Location> = new State<Location>(window.location)
+    root: string = null
 
-    constructor() {
+    constructor(root: string = null) {
         window.onpopstate = () => {
             this.instance.set(window.location)
         }
+
+        this.root = root
     }
 
     navigate(url: string) {
@@ -245,6 +248,10 @@ export class BrowserRouter {
 
             ...Object.keys(routes).map(route => {
 
+                if ( this.root != null ) {
+                    route = `${this.root}/${route}`
+                }
+
                 return $when(() => Utility.doesPathnameMatch(this.instance.get().pathname, route), () => {
 
                     const data = Utility.parseSearchParams(this.instance.get().toString(), route)
@@ -263,6 +270,10 @@ export class BrowserRouter {
             //It caches the function, then uses state to update the get and args instead of
             //recalling with new values.
             ...Object.keys(cachedRoutes).map(route => {
+
+                if ( this.root != null ) {
+                    route = `${this.root}/${route}`
+                }
 
                 return $when(() => Utility.doesPathnameMatch(this.instance.get().pathname, route), () => {
 

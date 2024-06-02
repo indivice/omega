@@ -41,81 +41,117 @@ export class Component {
 
 }
 
-export type Store<StoreType extends object> = {
-    spread: State<any>[],
-    update: ( updateList: Partial<{ [P in keyof StoreType]: (prev: StoreType[P]) => StoreType[P] }>  ) => void,
-} & { [P in keyof StoreType]: State<StoreType[P]> }
+export type Store<T extends object> = {
+    update: (updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<{ [ P in keyof T ]: T[P] extends object ? Partial<T[P]>: T[P] }>) => void,
+    listen: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) => Function,
+    removeListener: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) => Map<State<any> | Store<any>, boolean>,
+    get: () => { [ P in keyof T ]: T[P] }
+} & { [ P in keyof T ]: T[P] extends object ? Store<T[P]> & { [ N in keyof T[P] ]: T[P][N] extends object ? Store<T[P][N]> : State<T[P][N]> } : State<T[P]> }
+
+export function Store<T extends object>(initial: T): Store<T> {
+
+    //@ts-ignore
+    let $: { [ P in keyof T ]: T[P] extends object ? Store<T[P]> & { [ N in keyof T[P] ]: T[P][N] extends object ? Store<T[P][N]> : State<T[P][N]> } : State<T[P]> } = {}
+    let keys: string[] = [];
+
+    for ( let key of Object.keys(initial) ) {
+
+        if ( key === "update" || key === "listen" || key === "get" || key === "removeListener" ) {
+            throw "Cannot name object to the built-ins. Please make sure you name them differently."
+        }
+
+        if ( (typeof(initial[key])) == "object" ) {
+
+            $[key] = Store(initial[key])
+
+        } else {
+
+            $[key] = new State(initial[key])
+
+        }
+
+        keys.push(key)
+
+    }
+
+    return {
+        ...$,
+        update(updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<{ [ P in keyof T ]: T[P] extends object ? Partial<T[P]>: T[P] }>) {
+
+            //update based on states or Store.
+            const batches = []
+            const _update = updater(this.get())
+    
+            for ( let _state of Object.keys(_update) ) {
+    
+                if ( $[_state].update != undefined ) {
+    
+                    //it is a Store
+                    $[_state].update(() => _update[_state])
+    
+                } else {
+    
+                    batches.push(
+                        $[_state].batch(() => _update[_state])
+                    )
+    
+                }
+    
+            }
+    
+        },
+
+        listen(fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) {
+
+            console.log(this)
+            for ( let item of keys ) {
+                $[item].listen(fx)
+            }
+    
+            return fx
+    
+        },
+
+        removeListener(fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) {
+
+            const status = new Map<State<any> | Store<any>, boolean>()
+    
+            for ( let item of keys ) {
+    
+                status[$[item]] = $[item].removeListener(fx)
+    
+            }
+    
+            return status
+    
+        },
+
+        get(): { [ P in keyof T ]: T[P] } {
+
+            //@ts-ignore
+            const ret: { [ P in keyof T ]: T[P] } = {}
+            for ( let item of keys ) {
+    
+                ret[item] = $[item].get()
+    
+            }
+    
+            return ret
+    
+        }
+    
+    }
+
+}
 
 export class State<T> {
 
-    value: T
+    private value: T
     updateList = new Set<(prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any>()
 
     constructor(initial: T) {
 
         this.value = initial
-
-    }
-
-    static Store<StoreType extends object>(input: StoreType) {
-
-        //@ts-ignore (we can do nothing here, it needs to be like this )
-        const storeData: { [P in keyof StoreType]: State<StoreType[P]> } = {}
-        const spread = []
-
-        Object.keys(input).forEach((key) => {
-
-            storeData[key] = new State(input[key])
-            spread.push(storeData[key])
-
-        })
-
-        return {
-
-            ...storeData,
-            spread, //helps spreading the entire store for regions, or even advanced array operators to spread some parts (if wished)
-
-            update(updateList: Partial<{ [P in keyof StoreType]: (prev: StoreType[P]) => StoreType[P] }>) {
-
-                let batches = []
-                for (let state of Object.keys(updateList)) {
-
-                    batches.push(
-                        storeData[state].batch(updateList[state])
-                    )
-
-                }
-
-                $batch(batches)
-
-            },
-
-            get(): { [ P in keyof StoreType ]: StoreType[P] } {
-
-                //@ts-ignore
-                const data: { [ P in keyof StoreType ]: StoreType[P] } = {}
-                
-                for ( let key of Object.keys(storeData) ) {
-
-                    data[key] = storeData[key].get()
-
-                }
-
-                return data
-
-            },
-
-            listen(fx: (prev: any, newv: any, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) {
-
-                for ( let _state of Object.keys(storeData) ) {
-
-                    storeData[_state].listen(fx)
-
-                }
-
-            }
-
-        }
 
     }
 
@@ -131,7 +167,7 @@ export class State<T> {
 
     }
 
-    $text(builder: (value: T) => string = (value) => `${this.get()}`) {
+    $text(builder: (value: T) => string = () => `${this.get()}`) {
 
         return $text([this], () => builder(this.value))
 
@@ -173,10 +209,16 @@ export class State<T> {
     }
 
     //basic listener
-    listen(fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any): number {
+    listen(fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any): Function {
 
         this.updateList.add(fx)
-        return this.updateList.size - 1
+        return fx
+
+    }
+
+    removeListener(fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any): boolean {
+
+        return this.updateList.delete(fx)
 
     }
 
@@ -190,10 +232,10 @@ export class Dynamic<T> extends Component {
 
     dynamic: {
         callback: () => T,
-        states: State<any>[]
+        states: (State<any> | Store<any>)[]
     }
 
-    constructor(callback: () => T, states: State<any>[], __driver__: object = {}) {
+    constructor(callback: () => T, states: (State<any> | Store<any>)[], __driver__: object = {}) {
 
         super(ComponentIndex.__dynamic__, {})
         this.dynamic = {

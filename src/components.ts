@@ -1,4 +1,4 @@
-import { Dynamic, Component, Property, State } from "./index"
+import { Dynamic, Component, Property, State, Store } from "./index"
 import { DriverUtility } from "./driver"
 import {
     AudioAttributes, DropdownAttributes,
@@ -28,19 +28,19 @@ type defaultPropertyType = Property & Events<Event>
  * In any case, $component produces dynamic callbacks for back-to back two trees.
  */
 
-export function $text(states: State<any>[], builder: () => string) {
+export function $text(states: (State<any> | Store<any>)[], builder: () => string) {
 
     return new Dynamic<string>(builder, states, { context: "text" })
 
 }
 
-export function $node(states: State<any>[], builder: () => Component) { //replaces node when dependency updates. To be used SURGICALLY.
+export function $node(states: (State<any> | Store<any>)[], builder: () => Component) { //replaces node when dependency updates. To be used SURGICALLY.
 
     return new Dynamic<Component>(builder, states, { context: "node" })
 
 }
 
-export function $property<T>(states: State<any>[], builder: () => T) {
+export function $property<T>(states: (State<any> | Store<any>)[], builder: () => T) {
 
     return new Dynamic<T>(builder, states, { context: "property" })
 
@@ -51,7 +51,7 @@ export type When = {
     execute: () => Component
 }
 
-export function $switch(states: State<any>[], conditions: When[], fallback: Component = Layout.Empty()) {
+export function $switch(states: (State<any> | Store<any>)[], conditions: When[], fallback: Component = Layout.Empty()) {
 
     //@ts-ignore
     return new Dynamic<Component>(() => { }, states, { context: 'switch', conditions, fallback })
