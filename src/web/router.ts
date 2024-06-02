@@ -1,5 +1,5 @@
-import { $switch, $when, Content, Layout } from "../components"
-import { Component, State } from "../index"
+import { $switch, $when, Content, Layout } from "../components.js"
+import { Component, State } from "../index.js"
 
 const Utility = {
 

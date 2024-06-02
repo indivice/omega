@@ -1,6 +1,6 @@
 //all the types for a component.
 
-import { Dynamic } from "./index"
+import { Dynamic } from "./index.js"
 
 //enums for specific components
 export enum ComponentIndex {

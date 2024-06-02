@@ -1,5 +1,5 @@
-import { Dynamic, Component, Property, State, Store } from "./index"
-import { DriverUtility } from "./driver"
+import { Dynamic, Component, Property, State, Store } from "./index.js"
+import { DriverUtility } from "./driver.js"
 import {
     AudioAttributes, DropdownAttributes,
     DropdownItemAttributes, IFrameAttributes,

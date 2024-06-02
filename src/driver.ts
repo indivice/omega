@@ -2,7 +2,7 @@
 //driver mnemonics and tree representions. We can use: Optimized modes
 //and API friendly modes.
 
-import { Property, Component, Dynamic } from "./index"
+import { Property, Component, Dynamic } from "./index.js"
 
 //this file contains more of "API Friendly" modes of Driver functionality.
 

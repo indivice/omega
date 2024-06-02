@@ -1,8 +1,8 @@
 //The most fundamental definitions are stored here. All the basic definition required to build
 //an application using omega
 
-import { $batch, $node, $property, $text } from "./components"
-import { GlobalAttributes, ComponentIndex } from "./type"
+import { $batch, $node, $property, $text } from "./components.js"
+import { GlobalAttributes, ComponentIndex } from "./type.js"
 
 /**
  * This part defines the application-specific properties, some of which are global
@@ -46,6 +46,7 @@ export class Component {
 export type StoreUpdater<T> = { [ P in keyof T ]: T[P] extends object ? Partial<StoreUpdater<T[P]>> : T[P] }
 
 export type Store<T extends object> = {
+    __is__store__: boolean,
     update: (updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<StoreUpdater<T>>) => void,
     listen: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) => Function,
     removeListener: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, { prev: any, newv: any }>) => any) => Map<State<any> | Store<any>, boolean>,
@@ -60,7 +61,7 @@ export function Store<T extends object>(initial: T): Store<T> {
 
     for ( let key of Object.keys(initial) ) {
 
-        if ( key === "update" || key === "listen" || key === "get" || key === "removeListener" ) {
+        if ( key === "__is__store__" || key === "update" || key === "listen" || key === "get" || key === "removeListener" ) {
             throw "Cannot name object to the built-ins. Please make sure you name them differently."
         }
 
@@ -79,6 +80,7 @@ export function Store<T extends object>(initial: T): Store<T> {
     }
 
     return {
+        __is__store__: true,
         ...$,
         update(updater: ( prev: { [ P in keyof T ]: T[P] } ) => Partial<StoreUpdater<T>>) {
 
@@ -88,7 +90,7 @@ export function Store<T extends object>(initial: T): Store<T> {
     
             for ( let _state of Object.keys(_update) ) {
     
-                if ( $[_state].update != undefined ) {
+                if ( $[_state].__is__store__ != undefined ) {
     
                     //it is a Store
                     $[_state].update(() => _update[_state])
@@ -102,6 +104,8 @@ export function Store<T extends object>(initial: T): Store<T> {
                 }
     
             }
+
+            $batch(batches)
     
         },
 

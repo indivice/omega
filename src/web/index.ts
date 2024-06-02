@@ -1,5 +1,5 @@
-import { Component, Dynamic, Property, State } from '../index'
-import { ComponentIndex } from '../type'
+import { Component, Dynamic, Property, State } from '../index.js'
+import { ComponentIndex } from '../type.js'
 
 class WebRenderEngine {
 
