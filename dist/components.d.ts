@@ -1,5 +1,5 @@
 import { Dynamic, Component, Property, State, Store } from "./index.js";
-import { AudioAttributes, DropdownAttributes, DropdownItemAttributes, IFrameAttributes, ImageAttributes, InputAttributes, LinkAttributes, MediaSourceAttributes, MultiMediaAttributes, Events, VideoAttributes, FormAttributes, LabelAttributes } from "./type";
+import { AudioAttributes, DropdownAttributes, DropdownItemAttributes, IFrameAttributes, ImageAttributes, InputAttributes, LinkAttributes, MediaSourceAttributes, MultiMediaAttributes, Events, VideoAttributes, FormAttributes, LabelAttributes } from "./type.js";
 type defaultPropertyType = Property & Events<Event>;
 export declare function $text(states: (State<any> | Store<any>)[], builder: () => string): Dynamic<string>;
 export declare function $node(states: (State<any> | Store<any>)[], builder: () => Component): Dynamic<Component>;
