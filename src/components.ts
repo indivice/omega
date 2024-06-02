@@ -10,7 +10,7 @@ import {
     FormAttributes,
     LabelAttributes
 }
-    from "./type"
+    from "./type.js"
 
 type defaultPropertyType = Property & Events<Event>
 
