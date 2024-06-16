@@ -65,7 +65,8 @@ export function Store<T extends object>(initial: T): Store<T> {
             throw "Cannot name object to the built-ins. Please make sure you name them differently."
         }
 
-        if ( (typeof(initial[key])) == "object" ) {
+        //distinguish between the object and array.
+        if ( (typeof(initial[key])) == "object" && (initial[key] as Array<any>).constructor == Array ) {
 
             $[key] = Store(initial[key])
 
