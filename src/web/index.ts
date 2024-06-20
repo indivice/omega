@@ -623,7 +623,18 @@ class WebRenderEngine {
                     switch (component.properties.__driver__.context) {
                         case "pure_html":
                             if (component.properties.__driver__.html != undefined) {
-                                return component.properties.__driver__.html
+                                
+                                const fragmentedData = document.createElement('div')
+                                fragmentedData.innerHTML = (component.properties.__driver__.html as String).trim()
+
+                                if ( fragmentedData.childNodes.length == 1 ) {
+                                    //has a parent
+                                    return fragmentedData.firstChild
+                                }
+
+                                //no parent, uses div by default
+                                return fragmentedData
+
                             }
                     }
                 } else {
