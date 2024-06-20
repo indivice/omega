@@ -609,8 +609,8 @@ class WebRenderEngine {
                     element.append(
                         this.BuildComponentTree(component.properties.__driver__.__portal__.app)
                     )
-                    
-                } catch(e) {
+
+                } catch (e) {
 
                     console.warn("Invalid Portal Configurations. Please use the Layout.Portal component")
 
@@ -619,8 +619,17 @@ class WebRenderEngine {
                 return document.createComment('portal')
 
             case ComponentIndex.__driver__:
-                console.warn(`Component __driver__ (Index ${component.name})\ndoes not have any use in context of omegaUI official web driver`)
-                return document.createComment("unsupported")
+                if (component.properties.__driver__.context != undefined) {
+                    switch (component.properties.__driver__.context) {
+                        case "pure_html":
+                            if (component.properties.__driver__.html != undefined) {
+                                return component.properties.__driver__.html
+                            }
+                    }
+                } else {
+                    console.warn(`Component __driver__ (Index ${component.name})\ndoes not have any use in context of omegaUI official web driver`)
+                    return document.createComment("unsupported")
+                }
 
             case ComponentIndex.__dynamic__:
 
@@ -907,5 +916,17 @@ export function RenderWeb({ selector, app }: {
 }) {
 
     new WebRenderEngine(document.querySelector(selector), app).render()
+
+}
+
+export function $html(html: string) {
+
+    //warning, use with caution
+    return new Component(ComponentIndex.__driver__, {
+        __driver__: {
+            context: "pure_html",
+            html
+        }
+    })
 
 }
