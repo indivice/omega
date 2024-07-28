@@ -1,1 +1,98 @@
-import{$batch,$node,$property,$text}from"./components.js";import{ComponentIndex}from"./type.js";export class Component{name;properties;constructor(name,properties={}){this.name=name;this.properties=properties}}export function Store(initial){let $={};let keys=[];for(let key of Object.keys(initial)){if(key==="__is__store__"||key==="update"||key==="listen"||key==="get"||key==="removeListener"){throw"Cannot name object to the built-ins. Please make sure you name them differently."}if(typeof initial[key]=="object"&&initial[key].constructor==Array){$[key]=Store(initial[key])}else{$[key]=new State(initial[key])}keys.push(key)}return{__is__store__:true,...$,update(updater){const batches=[];const _update=updater(this.get());for(let _state of Object.keys(_update)){if($[_state].__is__store__!=undefined){$[_state].update((()=>_update[_state]))}else{batches.push($[_state].batch((()=>_update[_state])))}}$batch(batches)},listen(fx){console.log(this);for(let item of keys){$[item].listen(fx)}return fx},removeListener(fx){const status=new Map;for(let item of keys){status[$[item]]=$[item].removeListener(fx)}return status},get(){const ret={};for(let item of keys){ret[item]=$[item].get()}return ret}}}export class State{value;updateList=new Set;constructor(initial){this.value=initial}batch(callback){const prev=this.value;this.value=callback(this.value);return{state:this,prev:prev,newv:this.value}}$text(builder=(()=>`${this.get()}`)){return $text([this],(()=>builder(this.value)))}$node(builder){return $node([this],(()=>builder(this.value)))}$property(builder){return $property([this],(()=>builder(this.value)))}get(){return this.value}set(value){const prev=this.value;this.value=value;this.updateList.forEach((fx=>fx(prev,value,undefined)))}update(callback){const prev=this.value;this.value=callback(this.value);this.updateList.forEach((fx=>fx(prev,this.value,undefined)))}listen(fx){this.updateList.add(fx);return fx}removeListener(fx){return this.updateList.delete(fx)}}export class Dynamic extends Component{dynamic;constructor(callback,states,__driver__={}){super(ComponentIndex.__dynamic__,{});this.dynamic={callback:callback,states:states};this.properties.__driver__=__driver__}}
+import { RenderWebPlatform } from "./driver.js";
+export class Component {
+    name;
+    properties;
+    constructor(name, properties = {}) {
+        this.name = name;
+        this.properties = properties;
+    }
+}
+const DetectorStack = [];
+function SimpleConditionState() {
+    let condition = null;
+    const set = (cond) => {
+        condition = cond;
+    };
+    const get = () => condition;
+    return {
+        set, get
+    };
+}
+export class Dynamic {
+    condition;
+    callback;
+    constructor(callback, condition) {
+        this.condition = condition;
+        this.callback = () => callback(condition.set);
+    }
+    assign(callback) {
+        DetectorStack.push(callback);
+        let cbx = callback();
+        DetectorStack.pop();
+        return cbx;
+    }
+}
+export class State {
+    value;
+    subscribers = new Set();
+    constructor(value) {
+        this.value = value;
+    }
+    static batch(...batches) {
+        let callbackPool = new Set();
+        let statePool = new Map;
+        for (let _batch of batches) {
+            for (let subscriber of _batch.state.subscribers) {
+                callbackPool.add(subscriber);
+            }
+            statePool.set(_batch.state, _batch.value);
+            _batch.state.value = _batch.value;
+        }
+        for (let callback of callbackPool) {
+            callback({ event: "batch", value: statePool });
+        }
+    }
+    get() {
+        if (DetectorStack.length != 0) {
+            this.subscribers.add(DetectorStack[DetectorStack.length - 1]);
+        }
+        return this.value;
+    }
+    set(value, batch = false) {
+        if (batch == true) {
+            return {
+                state: this,
+                value
+            };
+        }
+        let temp = this.value;
+        this.value = value;
+        for (let subscriber of this.subscribers) {
+            subscriber({ event: "update", value: temp });
+        }
+    }
+    update(callback, batch = false) {
+        if (batch == true) {
+            return {
+                state: this,
+                value: callback(this.value)
+            };
+        }
+        let temp = this.value;
+        this.value = callback(this.value);
+        for (let subscriber of this.subscribers) {
+            subscriber({ event: "update", value: temp });
+        }
+    }
+    listen(callback) {
+        this.subscribers.add(callback);
+        return callback;
+    }
+}
+export function $(callback) {
+    const condition = SimpleConditionState();
+    return new Dynamic(callback, condition);
+}
+export function Render(properties) {
+    RenderWebPlatform(properties);
+}

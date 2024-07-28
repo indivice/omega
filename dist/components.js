@@ -1,1 +1,122 @@
-import{Dynamic,Component}from"./index.js";import{DriverUtility}from"./driver.js";import{ComponentIndex}from"./type.js";export function $text(states,builder){return new Dynamic(builder,states,{context:"text"})}export function $node(states,builder){return new Dynamic(builder,states,{context:"node"})}export function $property(states,builder){return new Dynamic(builder,states,{context:"property"})}export function $switch(states,conditions,fallback=Layout.Empty()){return new Dynamic((()=>{}),states,{context:"switch",conditions:conditions,fallback:fallback})}export function $when(condition,execute){return{condition:condition,execute:execute}}export function $batch(batches){const batchMap=new Map;const callbacks=new Set([...batches.reduce(((prev,item)=>{batchMap.set(item.state,{prev:item.prev,newv:item.newv});return[...prev,...item.state.updateList]}),[])]);callbacks.forEach((fx=>fx(null,null,batchMap)))}export const $ignore={attribute(){return"__ignore__"},style(){return{}}};function Column(properties={}){return new Component(ComponentIndex.ColumnView,properties)}Column.$builder=({each:each,properties:properties={},builder:builder,fallback:fallback=Layout.Empty()})=>new Dynamic(builder,[each],{context:"loop",root:Column(properties),fallback:fallback});function Row(properties={}){return new Component(ComponentIndex.RowView,properties)}Row.$builder=({each:each,properties:properties={},builder:builder,fallback:fallback=Layout.Empty()})=>new Dynamic(builder,[each],{context:"loop",root:Row(properties),fallback:fallback});function Grid(properties={}){return new Component(ComponentIndex.GridView,properties)}Grid.$builder=({each:each,properties:properties={},builder:builder,fallback:fallback=Layout.Empty()})=>new Dynamic(builder,[each],{context:"loop",root:Grid(properties),fallback:fallback});function View(properties={}){return new Component(ComponentIndex.View,properties)}View.$builder=({each:each,properties:properties={},builder:builder,fallback:fallback=Layout.Empty()})=>new Dynamic(builder,[each],{context:"loop",root:View(properties),fallback:fallback});function Form(prorperties={}){return new Component(ComponentIndex.Form,prorperties)}Form.$builder=({each:each,properties:properties={},builder:builder,fallback:fallback=Layout.Empty()})=>new Dynamic(builder,[each],{context:"loop",root:Form(properties),fallback:fallback});export const Layout={Portal:({selector:selector,component:component})=>new Component(ComponentIndex.Portal,DriverUtility.createPortal(selector,component)),Column:Column,Row:Row,Grid:Grid,View:View,Form:Form,Empty:()=>new Component(ComponentIndex.__empty__,{})};export const Input={Link:(properties={})=>new Component(ComponentIndex.Link,properties),Button:(prpoerties={})=>new Component(ComponentIndex.Button,prpoerties),Text:(properties={})=>new Component(ComponentIndex.TextInput,properties),TextArea:(properties={})=>new Component(ComponentIndex.TextAreaInput,properties),Numeric:(properties={})=>new Component(ComponentIndex.NumberInput,properties),Email:(properties={})=>new Component(ComponentIndex.EmailInput,properties),Password:(prorperties={})=>new Component(ComponentIndex.PasswordInput,prorperties),ExternalFile:(properties={})=>new Component(ComponentIndex.FileInput,properties),Checkbox:(properties={})=>new Component(ComponentIndex.Checkbox,properties),Dropdown:(properties={})=>new Component(ComponentIndex.Dropdown,properties),DropdownItem:(properties={})=>new Component(ComponentIndex.DropdownItem,properties),Date:(properties={})=>new Component(ComponentIndex.Date,properties),Time:(properties={})=>new Component(ComponentIndex.Time,properties),DateTime:(properties={})=>new Component(ComponentIndex.DateTime,properties),Color:(properties={})=>new Component(ComponentIndex.Color,properties)};export const Content={Icon(properties={}){return new Component(ComponentIndex.Icon,properties)},Text:(text="")=>new Component(ComponentIndex.__text__,DriverUtility.createText(text,{})),TextBox:(properties={})=>new Component(ComponentIndex.TextBox,properties),InlineTextBox:(properties={})=>new Component(ComponentIndex.InlineText,properties),Label:(properties={})=>new Component(ComponentIndex.Label,properties),LineBreak:(properties={})=>new Component(ComponentIndex.BreakLine,properties),HorizontalRule:(properties={})=>new Component(ComponentIndex.HorizontalRule,properties)};export const Media={Audio:(properties={})=>new Component(ComponentIndex.Audio,properties),Video:(properties={})=>new Component(ComponentIndex.Video,properties),Image:(properties={})=>new Component(ComponentIndex.Image,properties),WebView:(properties={})=>new Component(ComponentIndex.IFrame,properties),MultiMedia:(properties={})=>new Component(ComponentIndex.MultiMedia,properties),MediaSource:(properties={})=>new Component(ComponentIndex.MediaSource,properties),Canvas:(properties={})=>new Component(ComponentIndex.Canvas,properties)};
+import { HTML, ListView, Portal } from "./driver.js";
+import { Component } from "./index.js";
+import { ComponentIndex, } from "./type.js";
+export const Layout = {
+    Portal: ({ selector, component }) => {
+        return new Component(ComponentIndex.Portal, { __driver__: new Portal(selector, component) });
+    },
+    Column(properties = {}) {
+        return new Component(ComponentIndex.ColumnView, properties);
+    },
+    Row(properties = {}) {
+        return new Component(ComponentIndex.RowView, properties);
+    },
+    Grid(properties = {}) {
+        return new Component(ComponentIndex.GridView, properties);
+    },
+    View(properties = {}) {
+        return new Component(ComponentIndex.View, properties);
+    },
+    Form(prorperties = {}) {
+        return new Component(ComponentIndex.Form, prorperties);
+    },
+    Empty: () => {
+        return new Component(ComponentIndex.Empty, {});
+    },
+    ListView(properties) {
+        return new Component(ComponentIndex.ListView, { __driver__: new ListView(properties.from, properties.builder) });
+    }
+};
+export const Input = {
+    Link: (properties = {}) => {
+        return new Component(ComponentIndex.Link, properties);
+    },
+    Button: (prpoerties = {}) => {
+        return new Component(ComponentIndex.Button, prpoerties);
+    },
+    Text: (properties = {}) => {
+        return new Component(ComponentIndex.TextInput, properties);
+    },
+    TextArea: (properties = {}) => {
+        return new Component(ComponentIndex.TextAreaInput, properties);
+    },
+    Numeric: (properties = {}) => {
+        return new Component(ComponentIndex.NumberInput, properties);
+    },
+    Email: (properties = {}) => {
+        return new Component(ComponentIndex.EmailInput, properties);
+    },
+    Password: (prorperties = {}) => {
+        return new Component(ComponentIndex.PasswordInput, prorperties);
+    },
+    ExternalFile: (properties = {}) => {
+        return new Component(ComponentIndex.FileInput, properties);
+    },
+    Checkbox: (properties = {}) => {
+        return new Component(ComponentIndex.Checkbox, properties);
+    },
+    Dropdown: (properties = {}) => {
+        return new Component(ComponentIndex.Dropdown, properties);
+    },
+    DropdownItem: (properties = {}) => {
+        return new Component(ComponentIndex.DropdownItem, properties);
+    },
+    Date: (properties = {}) => {
+        return new Component(ComponentIndex.Date, properties);
+    },
+    Time: (properties = {}) => {
+        return new Component(ComponentIndex.Time, properties);
+    },
+    DateTime: (properties = {}) => {
+        return new Component(ComponentIndex.DateTime, properties);
+    },
+    Color: (properties = {}) => {
+        return new Component(ComponentIndex.Color, properties);
+    }
+};
+export const Content = {
+    Icon(properties = {}) {
+        return new Component(ComponentIndex.Icon, properties);
+    },
+    Text: (properties = {}) => {
+        return new Component(ComponentIndex.TextBox, properties);
+    },
+    InlineText: (properties = {}) => {
+        return new Component(ComponentIndex.InlineText, properties);
+    },
+    Label: (properties = {}) => {
+        return new Component(ComponentIndex.Label, properties);
+    },
+    LineBreak: (properties = {}) => {
+        return new Component(ComponentIndex.BreakLine, properties);
+    },
+    HorizontalRule: (properties = {}) => {
+        return new Component(ComponentIndex.HorizontalRule, properties);
+    },
+    HTML(html) {
+        return new Component(ComponentIndex.HTML, { __driver__: new HTML(html) });
+    }
+};
+export const Media = {
+    Audio: (properties = {}) => {
+        return new Component(ComponentIndex.Audio, properties);
+    },
+    Video: (properties = {}) => {
+        return new Component(ComponentIndex.Video, properties);
+    },
+    Image: (properties = {}) => {
+        return new Component(ComponentIndex.Image, properties);
+    },
+    WebView: (properties = {}) => {
+        return new Component(ComponentIndex.IFrame, properties);
+    },
+    MultiMedia: (properties = {}) => {
+        return new Component(ComponentIndex.MultiMedia, properties);
+    },
+    MediaSource: (properties = {}) => {
+        return new Component(ComponentIndex.MediaSource, properties);
+    },
+    Canvas: (properties = {}) => {
+        return new Component(ComponentIndex.Canvas, properties);
+    }
+};

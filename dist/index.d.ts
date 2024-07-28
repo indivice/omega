@@ -1,81 +1,66 @@
-import { GlobalAttributes, ComponentIndex } from "./type.js";
-export type Property = {
-    __driver__?: any;
+import { ComponentIndex, GlobalAttributes, OmegaString } from "./type.js";
+export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string)>;
+export type Properties = {
+    __driver__?: object;
     ondestroy?: () => any;
-    children?: Component[];
-    child?: Component;
+    children?: (Component | OmegaString | ChildDynamicProperty)[];
+    child?: Component | OmegaString | ChildDynamicProperty;
     style?: {
         [P in keyof Partial<CSSStyleDeclaration & {
             "viewTransitionName": string;
-        }>]: String | string | Dynamic<String | string>;
+        }>]: string | String | Dynamic<string | String>;
     } | Dynamic<{
         [P in keyof Partial<CSSStyleDeclaration & {
             "viewTransitionName": string;
-        }>]: String | string;
+        }>]: string | String | Dynamic<string | String>;
     }>;
     reference?: State<any>;
 } & Partial<GlobalAttributes>;
 export declare class Component {
     name: ComponentIndex;
-    properties: Property;
-    constructor(name: ComponentIndex, properties?: Property);
+    properties: Properties;
+    constructor(name: ComponentIndex, properties?: Properties);
 }
-export type StoreUpdater<T> = {
-    [P in keyof T]: T[P] extends object ? Partial<StoreUpdater<T[P]>> : T[P];
-};
-export type Store<T extends object> = {
-    __is__store__: boolean;
-    update: (updater: (prev: {
-        [P in keyof T]: T[P];
-    }) => Partial<StoreUpdater<T>>) => void;
-    listen: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, {
-        prev: any;
-        newv: any;
-    }>) => any) => Function;
-    removeListener: (fx: (prev: T, newv: T, batch: undefined | Map<State<any>, {
-        prev: any;
-        newv: any;
-    }>) => any) => Map<State<any> | Store<any>, boolean>;
-    get: () => {
-        [P in keyof T]: T[P];
+export declare class Dynamic<T> {
+    condition: {
+        set: (cond: string) => void;
+        get: () => string;
     };
-} & {
-    [P in keyof T]: T[P] extends object ? Store<T[P]> & {
-        [N in keyof T[P]]: T[P][N] extends object ? Store<T[P][N]> : State<T[P][N]>;
-    } : State<T[P]>;
+    callback: () => T;
+    constructor(callback: (condition: (cond: string) => void) => T, condition: {
+        set: (cond: string) => void;
+        get: () => string;
+    });
+    assign(callback: () => any): any;
+}
+export type StateEvent<T> = {
+    event: "update";
+    value: T;
+} | {
+    event: "batch";
+    value: Map<State<any>, any>;
 };
-export declare function Store<T extends object>(initial: T): Store<T>;
 export declare class State<T> {
-    private value;
-    updateList: Set<(prev: T, newv: T, batch: undefined | Map<State<any>, {
-        prev: any;
-        newv: any;
-    }>) => any>;
-    constructor(initial: T);
-    batch(callback: (prev: T) => T): {
-        state: State<T>;
-        prev: T;
-        newv: T;
-    };
-    $text(builder?: (value: T) => string): Dynamic<string>;
-    $node(builder: (value: T) => Component): Dynamic<Component>;
-    $property<P>(builder: (value: T) => P): Dynamic<P>;
+    value: T;
+    subscribers: Set<(event: StateEvent<T>) => any>;
+    constructor(value: T);
+    static batch(...batches: {
+        state: State<any>;
+        value: any;
+    }[]): void;
     get(): T;
-    set(value: T): void;
-    update(callback: (prev: T) => T): void;
-    listen(fx: (prev: T, newv: T, batch: undefined | Map<State<any>, {
-        prev: any;
-        newv: any;
-    }>) => any): Function;
-    removeListener(fx: (prev: T, newv: T, batch: undefined | Map<State<any>, {
-        prev: any;
-        newv: any;
-    }>) => any): boolean;
-}
-export declare class Dynamic<T> extends Component {
-    dynamic: {
-        callback: () => T;
-        states: (State<any> | Store<any>)[];
+    set(value: T, batch?: boolean): {
+        state: State<T>;
+        value: T;
     };
-    constructor(callback: () => T, states: (State<any> | Store<any>)[], __driver__?: object);
+    update(callback: (prev: T) => T, batch?: boolean): {
+        state: State<T>;
+        value: T;
+    };
+    listen(callback: (event: StateEvent<T>) => any): (event: StateEvent<T>) => any;
 }
+export declare function $<T>(callback: (setKey: (key: string) => void) => T): Dynamic<T>;
+export declare function Render(properties: {
+    selector: string;
+    app: () => Component;
+}): void;

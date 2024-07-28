@@ -2,11 +2,11 @@
     "compilerOptions": {
         "target": "ESNext",
         "declaration": true,
-        "rootDir": "./src",
+        "rootDir": "src",
         "outDir": "./dist",
         "removeComments": true,
     },
 
-    "exclude": [ "./ts", "tests" ],
-    "include": [ "./src" ]
+    "exclude": [ "./ts", "./src-old" ],
+    "include": [ "src" ]
 }
