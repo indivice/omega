@@ -1,16 +1,15 @@
 {
-  "name": "ts",
+  "name": "js",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "typescript": "^5.2.2",
-    "vite": "^5.2.0"
+    "vite": "^5.3.4"
   },
   "dependencies": {
     "@indivice/omega": "^1.0.0-alpha-1"

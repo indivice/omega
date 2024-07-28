@@ -54,7 +54,7 @@ export default function App() {
 							style: {
 								textDecoration: "underline",
 							},
-							child: 'app.ts'
+							child: 'app.js'
 						}),
 						' to modify your app'
 					]
