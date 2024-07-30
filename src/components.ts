@@ -77,43 +77,43 @@ export const Input = {
 
     },
 
-    Text: (properties: defaultPropertyType & InputAttributes = {}) => {
+    Text: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.TextInput, properties)
 
     },
 
-    TextArea: (properties: defaultPropertyType & InputAttributes = {}) => {
+    TextArea: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.TextAreaInput, properties)
 
     },
 
-    Numeric: (properties: defaultPropertyType & InputAttributes = {}) => {
+    Numeric: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.NumberInput, properties)
 
     },
 
-    Email: (properties: defaultPropertyType & InputAttributes = {}) => {
+    Email: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.EmailInput, properties)
 
     },
 
-    Password: (prorperties: defaultPropertyType & InputAttributes = {}) => {
+    Password: (prorperties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.PasswordInput, prorperties)
 
     },
 
-    ExternalFile: (properties: defaultPropertyType & InputAttributes = {}) => {
+    ExternalFile: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.FileInput, properties)
 
     },
 
-    Checkbox: (properties: defaultPropertyType & InputAttributes = {}) => {
+    Checkbox: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.Checkbox, properties)
 
@@ -131,25 +131,25 @@ export const Input = {
 
     },
 
-    Date: (properties: defaultPropertyType & InputAttributes = {}) => {
+    Date: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.Date, properties)
 
     },
 
-    Time: (properties: defaultPropertyType & InputAttributes = {}) => {
+    Time: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.Time, properties)
 
     },
 
-    DateTime: (properties: defaultPropertyType & InputAttributes = {}) => {
+    DateTime: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.DateTime, properties)
 
     },
 
-    Color: (properties: defaultPropertyType & InputAttributes = {}) => {
+    Color: (properties: defaultPropertyType & InputAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.Color, properties)
 
@@ -183,13 +183,13 @@ export const Content = {
 
     },
 
-    LineBreak: (properties: defaultPropertyType = {}) => {
+    LineBreak: (properties: defaultPropertyType & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.BreakLine, properties)
 
     },
 
-    HorizontalRule: (properties: defaultPropertyType = {}) => {
+    HorizontalRule: (properties: defaultPropertyType & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.HorizontalRule, properties)
 
@@ -235,13 +235,13 @@ export const Media = {
 
     },
 
-    MediaSource: (properties: defaultPropertyType & MediaSourceAttributes = {}) => {
+    MediaSource: (properties: defaultPropertyType & MediaSourceAttributes & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.MediaSource, properties)
 
     },
 
-    Canvas: (properties: defaultPropertyType = {}) => {
+    Canvas: (properties: defaultPropertyType & Omit<defaultPropertyType, 'child' | 'children'> = {}) => {
 
         return new Component(ComponentIndex.Canvas, properties)
 

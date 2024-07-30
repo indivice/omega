@@ -327,7 +327,7 @@ class RenderEngine {
             for (let key of Object.keys(properties)) {
 
                 if (properties[key] == "__ignore__" || properties[key] == undefined) continue //ignore the said property.
-                if (key == "children" || key == "child" || key == "__driver__" || key == "reference" || key == "ondestroy") continue //they are not to be used here.
+                if (key == "children" || key == "child" || key == "__driver__" || key == "reference" || key == "ondestroy" || key == "from" || key == "builder") continue //they are not to be used here.
 
                 switch (key) {
 
