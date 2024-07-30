@@ -1,4 +1,4 @@
-import { RenderWebPlatform } from "./driver.js"
+import { ListViewEvent, RenderWebPlatform } from "./driver.js"
 import { ComponentIndex, GlobalAttributes, OmegaString } from "./type.js"
 
 export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string)>
@@ -195,6 +195,29 @@ export function $<T>(callback: (setKey: ( key: string ) => void) => T) {
 
     const condition = SimpleConditionState()
     return new Dynamic<T>(callback, condition)
+
+}
+
+export function listItem<T>(value: T) {
+    return {
+        item: value
+    }
+}
+
+export function getListItem<T>(state: State<ListViewEvent<{ item: T }>>) {
+
+    return state.get().value.item
+
+}
+
+export function updateListItem<T>(state: State<ListViewEvent<{ item: T }>>, callback: ( value: T ) => T, batch: boolean = false) {
+
+    state.update(p => ({
+        ...p,
+        value: {
+            item: callback(p.value.item)
+        }
+    }), batch)
 
 }
 

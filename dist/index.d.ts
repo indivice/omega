@@ -1,3 +1,4 @@
+import { ListViewEvent } from "./driver.js";
 import { ComponentIndex, GlobalAttributes, OmegaString } from "./type.js";
 export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string)>;
 export type Properties = {
@@ -60,6 +61,15 @@ export declare class State<T> {
     listen(callback: (event: StateEvent<T>) => any): (event: StateEvent<T>) => any;
 }
 export declare function $<T>(callback: (setKey: (key: string) => void) => T): Dynamic<T>;
+export declare function listItem<T>(value: T): {
+    item: T;
+};
+export declare function getListItem<T>(state: State<ListViewEvent<{
+    item: T;
+}>>): T;
+export declare function updateListItem<T>(state: State<ListViewEvent<{
+    item: T;
+}>>, callback: (value: T) => T, batch?: boolean): void;
 export declare function Render(properties: {
     selector: string;
     app: () => Component;
