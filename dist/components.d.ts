@@ -14,8 +14,12 @@ export declare const Layout: {
     Form(prorperties?: defaultPropertyType & FormAttributes): Component;
     Empty: () => Component;
     ListView<T>(properties: {
-        from: State<T[]>;
-        builder: (event: State<ListViewEvent<T>>) => Component;
+        from: State<{
+            item: T;
+        }[]>;
+        builder: (event: State<ListViewEvent<{
+            item: T;
+        }>>) => Component;
     } & Omit<defaultPropertyType, 'child' | 'children'>): Component;
 };
 export declare const Input: {
