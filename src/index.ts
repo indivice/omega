@@ -204,20 +204,19 @@ export function listItem<T>(value: T) {
     }
 }
 
-export function getListItem<T>(state: State<ListViewEvent<{ item: T }>>) {
+export function useListItem<T>(state: State<ListViewEvent<{ item: T }>>) {
 
-    return state.get().value.item
-
-}
-
-export function updateListItem<T>(state: State<ListViewEvent<{ item: T }>>, callback: ( value: T ) => T, batch: boolean = false) {
-
-    state.update(p => ({
-        ...p,
-        value: {
-            item: callback(p.value.item)
+    return [
+        () => state.get().value.item,
+        (callback: (value: T) => T, batch: boolean = false) => {
+            state.update(p => ({
+                ...p,
+                value: {
+                    item: callback(p.value.item)
+                }
+            }), batch)
         }
-    }), batch)
+    ]
 
 }
 

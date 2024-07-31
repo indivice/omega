@@ -64,12 +64,9 @@ export declare function $<T>(callback: (setKey: (key: string) => void) => T): Dy
 export declare function listItem<T>(value: T): {
     item: T;
 };
-export declare function getListItem<T>(state: State<ListViewEvent<{
+export declare function useListItem<T>(state: State<ListViewEvent<{
     item: T;
-}>>): T;
-export declare function updateListItem<T>(state: State<ListViewEvent<{
-    item: T;
-}>>, callback: (value: T) => T, batch?: boolean): void;
+}>>): ((callback: (value: T) => T, batch?: boolean) => void)[];
 export declare function Render(properties: {
     selector: string;
     app: () => Component;
