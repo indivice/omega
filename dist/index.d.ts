@@ -66,7 +66,10 @@ export declare function listItem<T>(value: T): {
 };
 export declare function useListItem<T>(state: State<ListViewEvent<{
     item: T;
-}>>): ((callback: (value: T) => T, batch?: boolean) => void)[];
+}>>): [
+    () => T,
+    (callback: (value: T) => T, batch: boolean) => void
+];
 export declare function Render(properties: {
     selector: string;
     app: () => Component;
