@@ -61,14 +61,17 @@ export declare class State<T> {
     listen(callback: (event: StateEvent<T>) => any): (event: StateEvent<T>) => any;
 }
 export declare function $<T>(callback: (setKey: (key: string) => void) => T): Dynamic<T>;
-export declare function listItem<T>(value: T): {
+export declare function listItem<T>(value: T, item?: {
+    item: T;
+}): {
     item: T;
 };
 export declare function useListItem<T>(state: State<ListViewEvent<{
     item: T;
 }>>): [
+    () => number,
     () => T,
-    (callback: (value: T) => T, batch: boolean) => void
+    (callback: (value: T) => T, batch?: boolean) => void
 ];
 export declare function Render(properties: {
     selector: string;

@@ -198,18 +198,25 @@ export function $<T>(callback: (setKey: ( key: string ) => void) => T) {
 
 }
 
-export function listItem<T>(value: T) {
-    return {
-        item: value
+export function listItem<T>(value: T, item: { item: T } = null) {
+    if ( item != null ) {
+        item.item = value
+        return item
+    } else {
+        return {
+            item: value
+        }
     }
 }
 
 export function useListItem<T>(state: State<ListViewEvent<{ item: T }>>): [
+    () => number,
     () => T,
-    (callback: (value: T) => T, batch: boolean) => void
+    (callback: (value: T) => T, batch?: boolean) => void
 ] {
 
     return [
+        () => state.get().index,
         () => state.get().value.item,
         (callback: (value: T) => T, batch: boolean = false) => {
             state.update(p => ({
@@ -222,13 +229,6 @@ export function useListItem<T>(state: State<ListViewEvent<{ item: T }>>): [
     ]
 
 }
-
-/**
- * The wrap function is to be used whenever we are dealing with unique values.
- * 
- * To use for ListView generation -> Especially useful since without it, we will
- * not be able to differentiate between two values of the array.
- */
 
 export function Render(properties: { selector: string, app: () => Component }) {
 

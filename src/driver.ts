@@ -132,6 +132,7 @@ class RenderEngine {
                 )
             )
 
+            iterator++
         }
 
         const DetectChanges = (event: StateEvent<T[]>) => {
@@ -171,6 +172,7 @@ class RenderEngine {
                         )
                     )
 
+                    iterator++
                 }
 
                 return
@@ -194,7 +196,7 @@ class RenderEngine {
 
             for (let index = 0; index < Math.max(OldArray.length, NewArray.length); index++) {
 
-                if (typeof (OldArray[index]) != 'object') {
+                if (typeof (OldArray[index]) != 'object' && OldArray[index] != undefined) {
                     console.error('ListView cannot work with primitives. Please use Objects, or use primitive constructor')
                     return
                 }
@@ -203,7 +205,8 @@ class RenderEngine {
                     OldArrayMap.set(OldArray[index], index)
                 }
 
-                if (typeof (NewArray[index]) != 'object') {
+                if (typeof (NewArray[index]) != 'object' && NewArray[index] != undefined) {
+                    console.log(NewArray[index])
                     console.error('ListView cannot work with primitives. Please use Objects, or use primitive constructor')
                     return
                 }
