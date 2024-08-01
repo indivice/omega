@@ -40,8 +40,8 @@ END
 
 # Print the version in Bash
 echo "Uplaoded OmegaJS $version"
-cd ts
+cd template/ts
 npm i @indivice/omega@$version
-cd ..
-cd js
+cd ../..
+cd template/js
 npm i @indivice/omega@$version

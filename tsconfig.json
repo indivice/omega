@@ -7,6 +7,6 @@
         "removeComments": true,
     },
 
-    "exclude": [ "./ts", "./src-old" ],
+    "exclude": [ "template/ts", "./src-old" ],
     "include": [ "src" ]
 }
