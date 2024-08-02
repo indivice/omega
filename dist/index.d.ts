@@ -44,7 +44,7 @@ export type StateEvent<T> = {
 export declare class State<T> {
     value: T;
     subscribers: Set<(event: StateEvent<T>) => any>;
-    constructor(value: T);
+    constructor(value?: T);
     static batch(...batches: {
         state: State<any>;
         value: any;

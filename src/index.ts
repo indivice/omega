@@ -96,7 +96,7 @@ export class State<T> {
     value: T
     subscribers: Set<(event: StateEvent<T>) => any> = new Set()
 
-    constructor(value: T) {
+    constructor(value: T = null) {
         this.value = value
     }
 
