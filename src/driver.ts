@@ -655,6 +655,17 @@ class RenderEngine {
                     HandleComponentMetaData()
                     return element
 
+                case ComponentIndex.HTML:
+                    const HTMLData = component.properties.__driver__ as HTML
+                    element = document.createElement('div')
+                    element.innerHTML = HTMLData.content.toString()
+
+                    if ( element.children.length > 1 ) {
+                        return element
+                    } else {
+                        return element.children[0]
+                    }
+
                 //----------------------End----------------------//
 
                 //----------------------Input Components----------------------//

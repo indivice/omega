@@ -1,5 +1,5 @@
 import { HTML, ListView, ListViewEvent, Portal } from "./driver.js"
-import { Component, Properties, State } from "./index.js"
+import { ChildDynamicProperty, Component, Properties, State } from "./index.js"
 import {
     AudioAttributes, DropdownAttributes,
     DropdownItemAttributes, IFrameAttributes,
@@ -58,6 +58,19 @@ export const Layout = {
     ListView<T>(properties: { from: State<{ item: T }[]>, builder: (event: State<ListViewEvent<{ item: T }>>) => Component } & Omit<defaultPropertyType, 'child' | 'children'>) {
 
         return new Component(ComponentIndex.ListView, { __driver__: new ListView(properties.from, properties.builder) })
+
+    },
+
+    Ghost(children: (Component | OmegaString | ChildDynamicProperty)[]) {
+
+        return Layout.View({
+            style: {
+                display: 'contents',
+                all: 'unset',
+                pointerEvents: 'none'
+            },
+            children
+        })
 
     }
 

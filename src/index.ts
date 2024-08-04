@@ -36,7 +36,7 @@ export class Component {
  * 
  * Then the callback is removed from the detector stack to make sure there is no unwanted listening happening.
  */
-const DetectorStack: (() => any)[] = []
+const DetectorStack: ((...args: any[]) => any)[] = []
 
 function SimpleConditionState() {
 
@@ -69,7 +69,7 @@ export class Dynamic<T> {
     }) {
 
         this.condition = condition
-        this.callback = () => callback( condition.set )
+        this.callback = () => callback(condition.set)
     }
 
     assign(callback: () => any) {
@@ -78,7 +78,7 @@ export class Dynamic<T> {
         let cbx = callback()
         DetectorStack.pop()
         return cbx
-        
+
     }
 
 }
@@ -95,6 +95,7 @@ export class State<T> {
 
     value: T
     subscribers: Set<(event: StateEvent<T>) => any> = new Set()
+    trackExternallyAssignedFunctions: Set<(event: StateEvent<T>) => any> = new Set()
 
     constructor(value: T = null) {
         this.value = value
@@ -114,7 +115,7 @@ export class State<T> {
 
             statePool.set(_batch.state, _batch.value)
             _batch.state.value = _batch.value
-            
+
         }
 
         for (let callback of callbackPool) {
@@ -128,6 +129,7 @@ export class State<T> {
     get() {
         if (DetectorStack.length != 0) {
             this.subscribers.add(DetectorStack[DetectorStack.length - 1]) //add the last element.
+            this.trackExternallyAssignedFunctions.add(DetectorStack[DetectorStack.length - 1])
         }
         return this.value
     }
@@ -144,7 +146,13 @@ export class State<T> {
         let temp = this.value
         this.value = value
         for (let subscriber of this.subscribers) {
-            subscriber({ event: "update", value: temp })
+            if (this.trackExternallyAssignedFunctions.has(subscriber)) {
+                DetectorStack.push(subscriber)
+                subscriber({ event: "update", value: temp })
+                DetectorStack.pop()
+            } else {
+                subscriber({ event: "update", value: temp })
+            }
         }
 
     }
@@ -162,7 +170,13 @@ export class State<T> {
         this.value = callback(this.value)
 
         for (let subscriber of this.subscribers) {
-            subscriber({ event: "update", value: temp })
+            if (this.trackExternallyAssignedFunctions.has(subscriber)) {
+                DetectorStack.push(subscriber)
+                subscriber({ event: "update", value: temp })
+                DetectorStack.pop()
+            } else {
+                subscriber({ event: "update", value: temp })
+            }
         }
     }
 
@@ -191,7 +205,7 @@ export class State<T> {
  * Any property that might depend on this callback, will have to cache the condition to compare
  * it with. This is especially useful to reduce unecessary code calls.
  */
-export function $<T>(callback: (setKey: ( key: string ) => void) => T) {    
+export function $<T>(callback: (setKey: (key: string) => void) => T) {
 
     const condition = SimpleConditionState()
     return new Dynamic<T>(callback, condition)
@@ -199,7 +213,7 @@ export function $<T>(callback: (setKey: ( key: string ) => void) => T) {
 }
 
 export function listItem<T>(value: T, item: { item: T } = null) {
-    if ( item != null ) {
+    if (item != null) {
         item.item = value
         return item
     } else {
@@ -227,6 +241,44 @@ export function useListItem<T>(state: State<ListViewEvent<{ item: T }>>): [
             }), batch)
         }
     ]
+
+}
+
+export class LazyComponent {
+
+    _lazyConsumerState = new State<() => Component>()
+    callback: () => Promise<{ default: () => Component }>
+
+    constructor(callback: () => Promise<{ default: () => Component }>) {
+
+        this.callback = callback
+
+    }
+
+    load() {
+
+        if (this._lazyConsumerState.get() == null) {
+            this.callback().then(value => this._lazyConsumerState.set(value.default))
+                .catch(reason => console.log(reason))
+        }
+    }
+
+}
+
+export function useLazy(consumer: LazyComponent, fallback: Component | OmegaString | ChildDynamicProperty): ChildDynamicProperty {
+
+    //@ts-ignore
+    return $((_key) => {
+
+        if (consumer._lazyConsumerState.get() != null) {
+            _key("lazy loaded")
+            return consumer._lazyConsumerState.get()
+        } else {
+            _key("lazy loading")
+            return () => fallback
+        }
+
+    })
 
 }
 

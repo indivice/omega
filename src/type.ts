@@ -15,6 +15,7 @@ export enum ComponentIndex {
         Empty, //new to Omega-One
         Form,
         ListView, //new to omega-one
+        Ghost,
 
         //inputs
         Link,

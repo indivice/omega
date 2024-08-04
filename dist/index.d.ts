@@ -44,6 +44,7 @@ export type StateEvent<T> = {
 export declare class State<T> {
     value: T;
     subscribers: Set<(event: StateEvent<T>) => any>;
+    trackExternallyAssignedFunctions: Set<(event: StateEvent<T>) => any>;
     constructor(value?: T);
     static batch(...batches: {
         state: State<any>;
@@ -73,6 +74,17 @@ export declare function useListItem<T>(state: State<ListViewEvent<{
     () => T,
     (callback: (value: T) => T, batch?: boolean) => void
 ];
+export declare class LazyComponent {
+    _lazyConsumerState: State<() => Component>;
+    callback: () => Promise<{
+        default: () => Component;
+    }>;
+    constructor(callback: () => Promise<{
+        default: () => Component;
+    }>);
+    load(): void;
+}
+export declare function useLazy(consumer: LazyComponent, fallback: Component | OmegaString | ChildDynamicProperty): ChildDynamicProperty;
 export declare function Render(properties: {
     selector: string;
     app: () => Component;
