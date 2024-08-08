@@ -1,7 +1,7 @@
 import { ListViewEvent, RenderWebPlatform } from "./driver.js"
 import { ComponentIndex, GlobalAttributes, OmegaString } from "./type.js"
 
-export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string)>
+export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string) | ChildDynamicProperty>
 
 export type Properties = {
 
@@ -37,6 +37,18 @@ export class Component {
  * Then the callback is removed from the detector stack to make sure there is no unwanted listening happening.
  */
 const DetectorStack: ((...args: any[]) => any)[] = []
+const DisposeMap: Map<(...args: any[]) => any, State<any>[]> = new Map()
+
+export function disposeDetector( callback: (...args: any[]) => any ) {
+
+    for ( let state of DisposeMap.get(callback) ) {
+        state.subscribers.delete(callback)
+        state.trackExternallyAssignedFunctions.delete(callback)
+    }
+
+    DisposeMap.delete(callback)
+
+}
 
 function SimpleConditionState() {
 
@@ -72,7 +84,7 @@ export class Dynamic<T> {
         this.callback = () => callback(condition.set)
     }
 
-    assign(callback: () => any) {
+    static assign(callback: () => any) {
 
         DetectorStack.push(callback)
         let cbx = callback()
@@ -130,6 +142,20 @@ export class State<T> {
         if (DetectorStack.length != 0) {
             this.subscribers.add(DetectorStack[DetectorStack.length - 1]) //add the last element.
             this.trackExternallyAssignedFunctions.add(DetectorStack[DetectorStack.length - 1])
+            
+            if ( DisposeMap.has( DetectorStack[DetectorStack.length - 1] ) ) {
+                DisposeMap.set(
+                    DetectorStack[DetectorStack.length - 1], [
+                        ...DisposeMap.get(DetectorStack[DetectorStack.length - 1]),
+                        this
+                    ]
+                )
+            } else {
+                DisposeMap.set(
+                    DetectorStack[DetectorStack.length - 1],
+                    [this]
+                )
+            }
         }
         return this.value
     }
@@ -223,6 +249,10 @@ export function listItem<T>(value: T, item: { item: T } = null) {
     }
 }
 
+export function manyListItems<T>(value: T[] = []) {
+    return value.map(v => listItem(v))
+}
+
 export function useListItem<T>(state: State<ListViewEvent<{ item: T }>>): [
     () => number,
     () => T,
@@ -248,6 +278,7 @@ export class LazyComponent {
 
     _lazyConsumerState = new State<() => Component>()
     callback: () => Promise<{ default: () => Component }>
+    error = new State<boolean>(false)
 
     constructor(callback: () => Promise<{ default: () => Component }>) {
 
@@ -259,26 +290,71 @@ export class LazyComponent {
 
         if (this._lazyConsumerState.get() == null) {
             this.callback().then(value => this._lazyConsumerState.set(value.default))
-                .catch(reason => console.log(reason))
+                .catch(reason => {
+                    console.log(reason),
+                    this.error.set(true)
+                })
         }
     }
 
 }
 
-export function useLazy(consumer: LazyComponent, fallback: Component | OmegaString | ChildDynamicProperty): ChildDynamicProperty {
+export function useLazy({ consumer, onLoad, onError = "Failed to load dynamic component" } : {
+    consumer: LazyComponent, 
+    onLoad: Component | OmegaString | ChildDynamicProperty, 
+    onError?: Component | OmegaString | ChildDynamicProperty}): ChildDynamicProperty {
 
     //@ts-ignore
     return $((_key) => {
 
         if (consumer._lazyConsumerState.get() != null) {
+
             _key("lazy loaded")
             return consumer._lazyConsumerState.get()
+
+        } else if (consumer.error.get() == true) {
+
+            _key("lazy error")
+            return () => onError
+
         } else {
+
             _key("lazy loading")
-            return () => fallback
+            return () => onLoad
+
         }
 
     })
+
+}
+
+export function useMemo<T>(callback: () => T): [ State<T>, () => void ] {
+
+    const _state = new State<T>()
+
+    const memoizeChanges = () => {
+        _state.set( callback() )
+    }
+
+    const clearMemo = () => {
+        disposeDetector(memoizeChanges)
+    }
+
+    Dynamic.assign(memoizeChanges)
+    return [_state, clearMemo]
+
+}
+
+export function useInputBind(state: State<string> | State<String>) {
+
+    const _properties = {
+        value: $(() => `${ state.get().valueOf() }`),
+        oninput(e) {
+            state.set((e.target as HTMLInputElement).value)
+        }
+    }
+
+    return _properties
 
 }
 

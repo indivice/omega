@@ -1,5 +1,5 @@
 import { ListViewEvent } from "./driver.js";
-import { ChildDynamicProperty, Component, Properties, State } from "./index.js";
+import { Component, Properties, State } from "./index.js";
 import { AudioAttributes, DropdownAttributes, DropdownItemAttributes, IFrameAttributes, ImageAttributes, InputAttributes, LinkAttributes, MediaSourceAttributes, MultiMediaAttributes, Events, VideoAttributes, FormAttributes, LabelAttributes, OmegaString } from "./type.js";
 type defaultPropertyType = Properties & Events<Event>;
 export declare const Layout: {
@@ -21,7 +21,6 @@ export declare const Layout: {
             item: T;
         }>>) => Component;
     } & Omit<defaultPropertyType, 'child' | 'children'>): Component;
-    Ghost(children: (Component | OmegaString | ChildDynamicProperty)[]): Component;
 };
 export declare const Input: {
     Link: (properties?: defaultPropertyType & LinkAttributes) => Component;

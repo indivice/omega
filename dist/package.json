@@ -1,6 +1,6 @@
 {
 	"name": "@indivice/omega",
-	"version": "1.3.0-alpha",
+	"version": "2.0.0-alpha",
 	"description": "The language of modern user interfaces",
 	"main": "index.js",
 	"repository": {"url": "https://github.com/indivice/omega"},

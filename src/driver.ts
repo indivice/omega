@@ -1,4 +1,4 @@
-import { $, ChildDynamicProperty, Component, Dynamic, Properties, State, StateEvent } from "./index.js"
+import { $, ChildDynamicProperty, Component, disposeDetector, Dynamic, Properties, State, StateEvent } from "./index.js"
 import { OmegaString, ComponentIndex } from "./type.js"
 
 export class ListView<T> {
@@ -51,6 +51,7 @@ class RenderEngine {
 
     node: HTMLElement
     app: () => Component
+    dynamicChangeDetectorStack: (() => void)[] = []
 
     TrackDOMLife: Set<{ element: HTMLElement, callback: () => any }> = new Set()
 
@@ -63,6 +64,7 @@ class RenderEngine {
     DetectDOMChange() {
 
         const callback = () => {
+
             let index = 0
             for (let context of this.TrackDOMLife) {
 
@@ -308,7 +310,9 @@ class RenderEngine {
 
     //Build the component tree based on the application schematics. Takes a raw component!
     BuildDOMTree(
-        component: ChildDynamicProperty | OmegaString | Component | (() => Component | string)
+        component: ChildDynamicProperty | OmegaString | Component | (() => Component | string),
+        initialNodeStack: (HTMLElement | Text | Comment)[] = [],
+        root: number = 0 //0 means root
     ) {
 
         const HandleComponentChildren = (el: HTMLElement, ch: (Component | OmegaString | ChildDynamicProperty)[]) => {
@@ -399,7 +403,7 @@ class RenderEngine {
                             }
 
                             //it will automatically assign it to whom it may concern.
-                            properties.style.assign(ListenStyleChange)
+                            Dynamic.assign(ListenStyleChange)
 
                         } else {
 
@@ -500,7 +504,7 @@ class RenderEngine {
 
                                 }
 
-                                properties[key].assign(CommonStateCallback)
+                                Dynamic.assign(CommonStateCallback)
 
                             }
 
@@ -530,40 +534,48 @@ class RenderEngine {
             //we will proceed differently. Here are conditions and all that things will
             //be involved
             let prevConditon = component.condition.get()
-            let DynamicComponent: HTMLElement | Text | Comment = null
+            let NodeStack: (HTMLElement | Text | Comment)[] = initialNodeStack
 
             const DetectChanges = () => {
 
+                for (; this.dynamicChangeDetectorStack.length != root;) {
+                    disposeDetector(this.dynamicChangeDetectorStack.pop())
+                }
+
                 const callback = component.callback()
 
-                if (DynamicComponent == null) {
+                if (NodeStack.length == 0) {
 
-                    const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback)
-                    DynamicComponent = temp
+                    const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback, NodeStack, root + 1)
+                    NodeStack.push(temp)
                     return
 
                 }
 
                 if (component.condition.get() != prevConditon) {
 
-                    const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback)
-                    DynamicComponent.replaceWith(temp)
-                    DynamicComponent = temp
+                    const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback, NodeStack, root + 1)
+                    NodeStack.pop().replaceWith(temp)
+                    NodeStack.push(temp)
                     prevConditon = component.condition.get()
 
                 } else if (component.condition.get() == null) {
 
-                    const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback)
-                    DynamicComponent.replaceWith(temp)
-                    DynamicComponent = temp
+                    const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback, NodeStack, root + 1)
+                    NodeStack.pop().replaceWith(temp)
+                    NodeStack.push(temp)
 
                 }
 
             }
 
-            component.assign(DetectChanges)
+            if (root != 0) {
+                this.dynamicChangeDetectorStack.push(DetectChanges)
+            }
+            
+            Dynamic.assign(DetectChanges)
 
-            return DynamicComponent
+            return NodeStack[0]
 
 
         } else if (component instanceof Component) {
@@ -609,8 +621,20 @@ class RenderEngine {
             switch (component.name) {
 
                 //----------------------Layout Components----------------------//
+
+                case ComponentIndex.Portal:
+                    element = document.querySelector((component.properties.__driver__ as Portal).selector),
+                        element.replaceWith(this.BuildDOMTree((component.properties.__driver__ as Portal).component))
+
+                    return document.createComment("PE")
+
                 case ComponentIndex.ListView:
                     element = document.createElement('div')
+                    
+                    //@ts-ignore
+                    delete component.properties.from
+                    //@ts-ignore
+                    delete component.properties.builder
                     HandleComponentMetaData(false)
 
                     this.HandleListView((component.properties.__driver__ as ListView<any>), element)
@@ -660,7 +684,7 @@ class RenderEngine {
                     element = document.createElement('div')
                     element.innerHTML = HTMLData.content.toString()
 
-                    if ( element.children.length > 1 ) {
+                    if (element.children.length > 1) {
                         return element
                     } else {
                         return element.children[0]
@@ -853,6 +877,7 @@ class RenderEngine {
                 //----------------------End----------------------//
 
                 default:
+                    //@ts-ignore
                     throw `Invalid component request [ Unrecognized (Index ${component.name}) ]`
 
             }
@@ -876,6 +901,7 @@ class RenderEngine {
         this.node.replaceWith(
             this.BuildDOMTree(this.app())
         )
+
     }
 
 }
