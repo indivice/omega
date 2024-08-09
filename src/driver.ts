@@ -538,10 +538,6 @@ class RenderEngine {
 
             const DetectChanges = () => {
 
-                for (; this.dynamicChangeDetectorStack.length != root;) {
-                    disposeDetector(this.dynamicChangeDetectorStack.pop())
-                }
-
                 const callback = component.callback()
 
                 if (NodeStack.length == 0) {
@@ -554,12 +550,20 @@ class RenderEngine {
 
                 if (component.condition.get() != prevConditon) {
 
+                    for (; this.dynamicChangeDetectorStack.length != root;) {
+                        disposeDetector(this.dynamicChangeDetectorStack.pop())
+                    }
+
                     const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback, NodeStack, root + 1)
                     NodeStack.pop().replaceWith(temp)
                     NodeStack.push(temp)
                     prevConditon = component.condition.get()
 
                 } else if (component.condition.get() == null) {
+
+                    for (; this.dynamicChangeDetectorStack.length != root;) {
+                        disposeDetector(this.dynamicChangeDetectorStack.pop())
+                    }    
 
                     const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback, NodeStack, root + 1)
                     NodeStack.pop().replaceWith(temp)
