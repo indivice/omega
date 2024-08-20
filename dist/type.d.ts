@@ -1,43 +1,4 @@
 import { Dynamic } from "./index.js";
-export declare enum ComponentIndex {
-    Portal = 0,
-    ColumnView = 1,
-    RowView = 2,
-    GridView = 3,
-    View = 4,
-    Empty = 5,
-    Form = 6,
-    ListView = 7,
-    Link = 8,
-    Button = 9,
-    TextInput = 10,
-    TextAreaInput = 11,
-    NumberInput = 12,
-    EmailInput = 13,
-    PasswordInput = 14,
-    FileInput = 15,
-    Checkbox = 16,
-    Dropdown = 17,
-    DropdownItem = 18,
-    Date = 19,
-    Time = 20,
-    DateTime = 21,
-    Color = 22,
-    TextBox = 23,
-    InlineText = 24,
-    Icon = 25,
-    BreakLine = 26,
-    HorizontalRule = 27,
-    Label = 28,
-    HTML = 29,
-    Audio = 30,
-    Video = 31,
-    Image = 32,
-    IFrame = 33,
-    MultiMedia = 34,
-    MediaSource = 35,
-    Canvas = 36
-}
 export type OmegaString = String | string | Dynamic<String | string>;
 export type GlobalAttributes = {
     accesskey: OmegaString;

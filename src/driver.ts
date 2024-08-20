@@ -1,15 +1,17 @@
 import { $, ChildDynamicProperty, Component, disposeDetector, Dynamic, Properties, State, StateEvent } from "./index.js"
-import { OmegaString, ComponentIndex } from "./type.js"
+import { OmegaString } from "./type.js"
 
 export class ListView<T> {
 
     from: State<T[]>
     builder: (event: State<ListViewEvent<T>>) => Component
+    parent: Component
 
-    constructor(from: State<T[]>, builder: (event: State<ListViewEvent<T>>) => Component) {
+    constructor(from: State<T[]>, builder: (event: State<ListViewEvent<T>>) => Component, parent: Component = null) {
 
         this.from = from
         this.builder = builder
+        this.parent = parent
 
     }
 
@@ -47,7 +49,7 @@ export class HTML {
 }
 
 //the main rendering logic for the web platform
-class RenderEngine {
+export class RenderEngine {
 
     node: HTMLElement
     app: () => Component
@@ -139,6 +141,11 @@ class RenderEngine {
 
         const DetectChanges = (event: StateEvent<T[]>) => {
 
+            if ( root.isConnected == false ) {
+                disposeDetector(DetectChanges)
+                return
+            }
+
             let OldArray: T[] = event.event == "update" ? event.value : event.value.get(listView.from)
             let NewArray: T[] = listView.from.get()
 
@@ -184,11 +191,7 @@ class RenderEngine {
             if (OldArray.length != 0 && NewArray.length == 0) {
 
                 IndexValueMap = []
-                //everthing was removed
-                for (let child of root.children) {
-                    child.remove()
-                }
-
+                root.replaceChildren()
                 return
 
             }
@@ -208,7 +211,6 @@ class RenderEngine {
                 }
 
                 if (typeof (NewArray[index]) != 'object' && NewArray[index] != undefined) {
-                    console.log(NewArray[index])
                     console.error('ListView cannot work with primitives. Please use Objects, or use primitive constructor')
                     return
                 }
@@ -223,12 +225,7 @@ class RenderEngine {
             let padding = 0
             for (let value of OldArrayMap) {
 
-                if (typeof (value) != 'object') {
-                    console.error('ListView cannot work with primitives. Please use Objects, or use primitive constructor')
-                    return
-                }
-
-                if (NewArrayMap.has(value[0]) == false) {
+                if (NewArrayMap.has(value[0]) === false) {
                     root.children[value[1] + padding].remove()
                     IndexValueMap.splice(value[1] + padding, 1)
                     padding--
@@ -236,39 +233,32 @@ class RenderEngine {
 
             }
 
-            padding = 0
             //Now add the items
             for (let value of NewArrayMap) {
 
-                if (typeof (value) != 'object') {
-                    console.error('ListView cannot work with primitives. Please use Objects, or use primitive constructor')
-                    return
-                }
+                if (OldArrayMap.has(value[0]) === false) {
 
-                if (OldArrayMap.has(value[0]) == false) {
+                    if (root.children[value[1]] != undefined) {
 
-                    if (root.children[value[1] + padding] != undefined) {
-
-                        const _state = new State({ value: value[0], index: value[1] + padding })
+                        const _state = new State({ value: value[0], index: value[1]})
                         _state.listen(() => {
 
                             listView.from.value[_state.get().index] = _state.get().value
                         })
 
-                        IndexValueMap.splice(value[1] + padding, 0, _state)
+                        IndexValueMap.splice(value[1], 0, _state)
                         root.children[value[1]].before(
                             this.BuildDOMTree(
                                 listView.builder(
-                                    IndexValueMap[value[1] + padding]
+                                    _state
                                 )
                             )
                         )
 
                     } else {
 
-                        const _state = new State({ value: value[0], index: value[1] + padding })
+                        const _state = new State({ value: value[0], index: value[1] })
                         _state.listen(() => {
-
                             listView.from.value[_state.get().index] = _state.get().value
                         })
 
@@ -276,19 +266,18 @@ class RenderEngine {
                         root.appendChild(
                             this.BuildDOMTree(
                                 listView.builder(
-                                    IndexValueMap[value[1] + padding]
+                                    _state
                                 )
                             )
                         )
 
                     }
 
-                    padding++
-
                 }
 
             }
 
+            
             padding = 0
 
             //now synchronize the IndexMap
@@ -334,7 +323,7 @@ class RenderEngine {
             for (let key of Object.keys(properties)) {
 
                 if (properties[key] == "__ignore__" || properties[key] == undefined) continue //ignore the said property.
-                if (key == "children" || key == "child" || key == "__driver__" || key == "reference" || key == "ondestroy" || key == "from" || key == "builder") continue //they are not to be used here.
+                if (key == "children" || key == "child" || key == "__driver__" || key == "reference" || key == "ondestroy" || key == "from" || key == "builder" || key == "parent") continue //they are not to be used here.
 
                 switch (key) {
 
@@ -563,7 +552,7 @@ class RenderEngine {
 
                     for (; this.dynamicChangeDetectorStack.length != root;) {
                         disposeDetector(this.dynamicChangeDetectorStack.pop())
-                    }    
+                    }
 
                     const temp: HTMLElement | Text | Comment = this.BuildDOMTree(callback, NodeStack, root + 1)
                     NodeStack.pop().replaceWith(temp)
@@ -576,7 +565,7 @@ class RenderEngine {
             if (root != 0) {
                 this.dynamicChangeDetectorStack.push(DetectChanges)
             }
-            
+
             Dynamic.assign(DetectChanges)
 
             return NodeStack[0]
@@ -587,19 +576,22 @@ class RenderEngine {
             const HandleComponentMetaData = (hasChild = true) => {
 
                 if (component.properties != undefined) {
-
+                    
+                    //@ts-ignore
                     HandleComponentProperties(element, component.properties)
 
                     if (hasChild != false) { //short-circuit logic
 
                         if (component.properties.child != undefined) {
 
+                            //@ts-ignore
                             HandleComponentChildren(element, [component.properties.child])
 
                         }
 
                         else if (component.properties.children != undefined) {
 
+                            //@ts-ignore
                             HandleComponentChildren(element, component.properties.children)
 
                         }
@@ -612,6 +604,7 @@ class RenderEngine {
 
                         if (component.properties.ondestroy != undefined) {
                             this.TrackDOMLife.add({
+                                //@ts-ignore
                                 element, callback: component.properties.ondestroy
                             })
                         }
@@ -620,271 +613,10 @@ class RenderEngine {
                 }
             }
 
-            let element: HTMLElement
-            //for pure components, that are useful for describing user interfaces
-            switch (component.name) {
+            let element: Element | Text | Comment | HTMLElement = component.build(this)
+            HandleComponentMetaData(component.hasChild)
 
-                //----------------------Layout Components----------------------//
-
-                case ComponentIndex.Portal:
-                    element = document.querySelector((component.properties.__driver__ as Portal).selector),
-                        element.replaceWith(this.BuildDOMTree((component.properties.__driver__ as Portal).component))
-
-                    return document.createComment("PE")
-
-                case ComponentIndex.ListView:
-                    element = document.createElement('div')
-                    
-                    //@ts-ignore
-                    delete component.properties.from
-                    //@ts-ignore
-                    delete component.properties.builder
-                    HandleComponentMetaData(false)
-
-                    this.HandleListView((component.properties.__driver__ as ListView<any>), element)
-
-                    return element
-
-                case ComponentIndex.Empty:
-                    return document.createComment('EM')
-
-                case ComponentIndex.Form:
-                    element = document.createElement('form')
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.View:
-                    element = document.createElement('div')
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.ColumnView:
-                    element = document.createElement('div')
-                    element.style.display = "flex"
-                    element.style.flexDirection = "column"
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.RowView:
-                    element = document.createElement("div")
-                    element.style.display = "flex"
-                    element.style.flexDirection = "row"
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.GridView:
-                    element = document.createElement('div')
-                    element.style.display = "grid"
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.HTML:
-                    const HTMLData = component.properties.__driver__ as HTML
-                    element = document.createElement('div')
-                    element.innerHTML = HTMLData.content.toString()
-
-                    if (element.children.length > 1) {
-                        return element
-                    } else {
-                        return element.children[0]
-                    }
-
-                //----------------------End----------------------//
-
-                //----------------------Input Components----------------------//
-
-                case ComponentIndex.TextInput:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'text')
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.TextAreaInput:
-                    element = document.createElement('textarea')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.Link:
-                    element = document.createElement('a')
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.Button:
-                    element = document.createElement('button')
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.NumberInput:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'number')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.EmailInput:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'email')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.PasswordInput:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'password')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.FileInput:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'file')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.Color:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'color')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.Checkbox:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'checkbox')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.Dropdown:
-                    element = document.createElement('select')
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.DropdownItem:
-                    element = document.createElement('option')
-
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.Date:
-                    element = document.createElement('input')
-
-                    element.setAttribute('type', 'date')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.Time:
-                    element = document.createElement('input')
-                    element.setAttribute('type', 'time')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.DateTime:
-                    element = document.createElement('input')
-                    element.setAttribute('type', 'datetime-local')
-
-                    HandleComponentMetaData(false)
-                    return element
-
-                //----------------------End----------------------//
-
-                //----------------------Content Components----------------------//
-
-                case ComponentIndex.InlineText:
-                    element = document.createElement('span')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.Icon:
-                    element = document.createElement('i')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.TextBox:
-                    element = document.createElement('p')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.Label:
-                    element = document.createElement('label')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.BreakLine:
-                    element = document.createElement('br')
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.HorizontalRule:
-                    element = document.createElement('hr')
-                    HandleComponentMetaData(false)
-                    return element
-
-                //----------------------End----------------------//
-
-                //----------------------Media Components----------------------//
-
-                case ComponentIndex.Audio:
-                    element = document.createElement('audio')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.Video:
-                    element = document.createElement('video')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.Image:
-                    element = document.createElement('img')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.IFrame:
-                    element = document.createElement('iframe')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.MultiMedia:
-                    element = document.createElement('object')
-                    HandleComponentMetaData()
-                    return element
-
-                case ComponentIndex.MediaSource:
-                    element = document.createElement('source')
-                    HandleComponentMetaData(false)
-                    return element
-
-                case ComponentIndex.Canvas:
-                    element = document.createElement('canvas')
-                    HandleComponentMetaData(false)
-                    return element
-
-                //----------------------End----------------------//
-
-                default:
-                    //@ts-ignore
-                    throw `Invalid component request [ Unrecognized (Index ${component.name}) ]`
-
-            }
+            return element
 
         } else if (component.constructor == String) {
 

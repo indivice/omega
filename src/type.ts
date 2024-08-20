@@ -2,62 +2,6 @@
 
 import { Dynamic } from "./index.js"
 
-//enums for specific components
-export enum ComponentIndex {
-
-    //components
-        //layouts
-        Portal,
-        ColumnView,
-        RowView,
-        GridView,
-        View,
-        Empty, //new to Omega-One
-        Form,
-        ListView, //new to omega-one
-        //inputs
-        Link,
-        Button,
-        TextInput,
-        TextAreaInput,
-        NumberInput,
-        EmailInput,
-        PasswordInput,
-        FileInput,
-        Checkbox,
-        Dropdown,
-        DropdownItem,
-        Date,
-        Time,
-        DateTime,
-        Color,
-
-        //content
-        TextBox,
-        InlineText,
-        Icon,
-        BreakLine,
-        HorizontalRule,
-        Label,
-        HTML, //new to omega-one
-
-        //media
-        Audio,
-        Video,
-        Image,
-        IFrame,
-        MultiMedia,
-        MediaSource,
-
-        //add new components here, so that the driver does not break.
-        //It will be a nightmare to fix it.
-
-        //new component
-        //media type
-        Canvas,
-
-}
-
 //use if OmegaDynamic strings are used
 export type OmegaString = String | string | Dynamic<String | string>
 

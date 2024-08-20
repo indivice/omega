@@ -1,5 +1,5 @@
-import { ListViewEvent } from "./driver.js";
-import { ComponentIndex, GlobalAttributes, OmegaString } from "./type.js";
+import { ListViewEvent, RenderEngine } from "./driver.js";
+import { GlobalAttributes, OmegaString } from "./type.js";
 export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string) | ChildDynamicProperty>;
 export type Properties = {
     __driver__?: object;
@@ -18,9 +18,11 @@ export type Properties = {
     reference?: State<any>;
 } & Partial<GlobalAttributes>;
 export declare class Component {
-    name: ComponentIndex;
+    name: string;
     properties: Properties;
-    constructor(name: ComponentIndex, properties?: Properties);
+    hasChild: boolean;
+    constructor(name: string, properties?: Properties, hasChild?: boolean);
+    build(engine: RenderEngine): Element | Comment;
 }
 export declare function disposeDetector(callback: (...args: any[]) => any): void;
 export declare class Dynamic<T> {
@@ -95,6 +97,7 @@ export declare function useLazy({ consumer, onLoad, onError }: {
     onError?: Component | OmegaString | ChildDynamicProperty;
 }): ChildDynamicProperty;
 export declare function useMemo<T>(callback: () => T): [State<T>, () => void];
+export declare function useCallback(callback: () => void): () => void;
 export declare function useInputBind(state: State<string> | State<String>): {
     value: Dynamic<string>;
     oninput(e: any): void;

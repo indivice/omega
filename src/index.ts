@@ -1,5 +1,5 @@
-import { ListViewEvent, RenderWebPlatform } from "./driver.js"
-import { ComponentIndex, GlobalAttributes, OmegaString } from "./type.js"
+import { HTML, ListView, ListViewEvent, Portal, RenderEngine, RenderWebPlatform } from "./driver.js"
+import { GlobalAttributes, OmegaString } from "./type.js"
 
 export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string) | ChildDynamicProperty>
 
@@ -18,14 +18,70 @@ export type Properties = {
 
 } & Partial<GlobalAttributes>
 
+const lookupTable = {
+    "portal": (engine: RenderEngine, component: Component) => {
+
+
+        let el: HTMLElement = document.querySelector((component.properties.__driver__ as Portal).selector)
+        el.replaceWith(engine.BuildDOMTree((component.properties.__driver__ as Portal).component))
+
+        return document.createComment("PE")
+
+    },
+
+    "html": (engine: RenderEngine, component: Component) => {
+
+        const HTMLData = component.properties.__driver__ as HTML
+        let element = document.createElement('div')
+        element.innerHTML = HTMLData.content.toString()
+
+        if (element.children.length > 1) {
+            return element
+        } else {
+            return element.children[0]
+        }
+
+    },
+
+    "empty": () => document.createComment('EM'),
+
+    "listview": (engine: RenderEngine, component: Component) => {
+
+        let element: HTMLElement
+
+        if ((component.properties.__driver__ as ListView<any>).parent != null) {
+            element = engine.BuildDOMTree((component.properties.__driver__ as ListView<any>).parent)
+        } else {
+            element = document.createElement('div')
+        }
+
+        engine.HandleListView((component.properties.__driver__ as ListView<any>), element)
+        return element
+
+    }
+}
+
 export class Component {
 
-    name: ComponentIndex
+    name: string
     properties: Properties
+    hasChild: boolean
 
-    constructor(name: ComponentIndex, properties: Properties = {}) {
+    constructor(name: string, properties: Properties = {}, hasChild = true) {
         this.name = name
         this.properties = properties
+        this.hasChild = hasChild
+    }
+
+    build(engine: RenderEngine) {
+
+        if ( this.name != "portal" && this.name != "html" && this.name != "empty" && this.name != "listview") {
+            const el = document.createElement(this.name)
+            return el
+        } else {
+            return lookupTable[this.name](engine, this)
+        }
+
     }
 
 }
@@ -342,6 +398,17 @@ export function useMemo<T>(callback: () => T): [ State<T>, () => void ] {
 
     Dynamic.assign(memoizeChanges)
     return [_state, clearMemo]
+
+}
+
+export function useCallback(callback: () => void) {
+
+    const clearCallback = () => {
+        disposeDetector(callback)
+    }
+
+    Dynamic.assign(callback)
+    return clearCallback
 
 }
 

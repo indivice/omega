@@ -20,7 +20,12 @@ export declare const Layout: {
         builder: (event: State<ListViewEvent<{
             item: T;
         }>>) => Component;
+        parent?: Component;
     } & Omit<defaultPropertyType, 'child' | 'children'>): Component;
+    Table(properties?: defaultPropertyType): Component;
+    TableRow(properties?: defaultPropertyType): Component;
+    TableHead(properties?: defaultPropertyType): Component;
+    TableBody(properties?: defaultPropertyType): Component;
 };
 export declare const Input: {
     Link: (properties?: defaultPropertyType & LinkAttributes) => Component;
@@ -47,6 +52,7 @@ export declare const Content: {
     LineBreak: (properties?: defaultPropertyType & Omit<defaultPropertyType, 'child' | 'children'>) => Component;
     HorizontalRule: (properties?: defaultPropertyType & Omit<defaultPropertyType, 'child' | 'children'>) => Component;
     HTML(html: OmegaString): Component;
+    TableData(properties?: defaultPropertyType): Component;
 };
 export declare const Media: {
     Audio: (properties?: defaultPropertyType & AudioAttributes) => Component;
