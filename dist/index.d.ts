@@ -1,4 +1,4 @@
-import { ListViewEvent, RenderEngine } from "./driver.js";
+import { ListViewEvent } from "./driver.js";
 import { GlobalAttributes, OmegaString } from "./type.js";
 export type ChildDynamicProperty = Dynamic<string | String | Component | (() => Component | string) | ChildDynamicProperty>;
 export type Properties = {
@@ -17,13 +17,12 @@ export type Properties = {
     }>;
     reference?: State<any>;
 } & Partial<GlobalAttributes>;
-export declare class Component {
+export type Component = {
     name: string;
     properties: Properties;
     hasChild: boolean;
-    constructor(name: string, properties?: Properties, hasChild?: boolean);
-    build(engine: RenderEngine): Element | Comment;
-}
+};
+export declare function Component(name: string, properties?: Properties, hasChild?: boolean): Component;
 export declare function disposeDetector(callback: (...args: any[]) => any): void;
 export declare class Dynamic<T> {
     condition: {

@@ -112,6 +112,7 @@ export class RenderEngine {
         //This map stores the index and their corresponding value, in a state to resolve synchronization
         //issues.
         let IndexValueMap: State<{ value: T, index: number }>[] = []
+        let dfrag = document.createDocumentFragment()
 
         let iterator = 0
         for (let value of listView.from.get()) {
@@ -130,7 +131,7 @@ export class RenderEngine {
 
             IndexValueMap.push(_state)
 
-            root.appendChild(
+            dfrag.append(
                 this.BuildDOMTree(
                     listView.builder(_state)
                 )
@@ -139,9 +140,11 @@ export class RenderEngine {
             iterator++
         }
 
+        root.append(dfrag)
+
         const DetectChanges = (event: StateEvent<T[]>) => {
 
-            if ( root.isConnected == false ) {
+            if (root.isConnected == false) {
                 disposeDetector(DetectChanges)
                 return
             }
@@ -175,7 +178,7 @@ export class RenderEngine {
 
                     IndexValueMap.push(_state)
 
-                    root.appendChild(
+                    dfrag.append(
                         this.BuildDOMTree(
                             listView.builder(_state)
                         )
@@ -184,6 +187,8 @@ export class RenderEngine {
                     iterator++
                 }
 
+                root.append(dfrag)
+
                 return
 
             }
@@ -191,7 +196,7 @@ export class RenderEngine {
             if (OldArray.length != 0 && NewArray.length == 0) {
 
                 IndexValueMap = []
-                root.replaceChildren()
+                root.innerHTML = ""
                 return
 
             }
@@ -240,7 +245,7 @@ export class RenderEngine {
 
                     if (root.children[value[1]] != undefined) {
 
-                        const _state = new State({ value: value[0], index: value[1]})
+                        const _state = new State({ value: value[0], index: value[1] })
                         _state.listen(() => {
 
                             listView.from.value[_state.get().index] = _state.get().value
@@ -277,7 +282,7 @@ export class RenderEngine {
 
             }
 
-            
+
             padding = 0
 
             //now synchronize the IndexMap
@@ -571,25 +576,30 @@ export class RenderEngine {
             return NodeStack[0]
 
 
-        } else if (component instanceof Component) {
+        } else if (component.constructor == String) {
+
+            //a raw string to say out loud!
+            return document.createTextNode(component.valueOf())
+
+        } else if ((component as Component).name != undefined) {
 
             const HandleComponentMetaData = (hasChild = true) => {
 
-                if (component.properties != undefined) {
-                    
+                if ((component as Component).properties != undefined) {
+
                     //@ts-ignore
                     HandleComponentProperties(element, component.properties)
 
                     if (hasChild != false) { //short-circuit logic
 
-                        if (component.properties.child != undefined) {
+                        if ((component as Component).properties.child != undefined) {
 
                             //@ts-ignore
                             HandleComponentChildren(element, [component.properties.child])
 
                         }
 
-                        else if (component.properties.children != undefined) {
+                        else if ((component as Component).properties.children != undefined) {
 
                             //@ts-ignore
                             HandleComponentChildren(element, component.properties.children)
@@ -597,12 +607,12 @@ export class RenderEngine {
                         }
                     }
 
-                    if (component.properties != undefined) {
-                        if (component.properties.reference != undefined) {
-                            component.properties.reference.set(element)
+                    if ((component as Component).properties != undefined) {
+                        if ((component as Component).properties.reference != undefined) {
+                            (component as Component).properties.reference.set(element)
                         }
 
-                        if (component.properties.ondestroy != undefined) {
+                        if ((component as Component).properties.ondestroy != undefined) {
                             this.TrackDOMLife.add({
                                 //@ts-ignore
                                 element, callback: component.properties.ondestroy
@@ -613,15 +623,63 @@ export class RenderEngine {
                 }
             }
 
-            let element: Element | Text | Comment | HTMLElement = component.build(this)
-            HandleComponentMetaData(component.hasChild)
+
+            const lookupTable = {
+                "portal": (engine: RenderEngine, component: Component) => {
+
+
+                    let el: HTMLElement = document.querySelector((component.properties.__driver__ as Portal).selector)
+                    el.replaceWith(engine.BuildDOMTree((component.properties.__driver__ as Portal).component))
+
+                    return document.createComment("PE")
+
+                },
+
+                "html": (engine: RenderEngine, component: Component) => {
+
+                    const HTMLData = component.properties.__driver__ as HTML
+                    let element = document.createElement('div')
+                    element.innerHTML = HTMLData.content.toString()
+
+                    if (element.children.length > 1) {
+                        return element
+                    } else {
+                        return element.children[0]
+                    }
+
+                },
+
+                "empty": () => document.createComment('EM'),
+
+                "listview": (engine: RenderEngine, component: Component) => {
+
+                    let element: HTMLElement
+
+                    if ((component.properties.__driver__ as ListView<any>).parent != null) {
+                        element = engine.BuildDOMTree((component.properties.__driver__ as ListView<any>).parent)
+                    } else {
+                        element = document.createElement('div')
+                    }
+
+                    engine.HandleListView((component.properties.__driver__ as ListView<any>), element)
+                    return element
+
+                }
+            }
+
+            const build = (component: Component) => {
+                if (component.name != "portal" && component.name != "html" && component.name != "empty" && component.name != "listview") {
+                    const el = document.createElement(component.name)
+                    return el
+                } else {
+                    return lookupTable[component.name](this, component)
+                }
+            }
+
+            let element: Element | Text | Comment | HTMLElement | Node = build((component as Component))
+            HandleComponentMetaData((component as Component).hasChild)
 
             return element
-
-        } else if (component.constructor == String) {
-
-            //a raw string to say out loud!
-            return document.createTextNode(component.valueOf())
 
         } else {
 

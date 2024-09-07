@@ -12,6 +12,6 @@
     "vite": "^5.3.4"
   },
   "dependencies": {
-    "@indivice/omega": "^2.0.1-alpha"
+    "@indivice/omega": "2.0.2-alpha"
   }
 }

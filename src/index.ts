@@ -18,73 +18,49 @@ export type Properties = {
 
 } & Partial<GlobalAttributes>
 
-const lookupTable = {
-    "portal": (engine: RenderEngine, component: Component) => {
 
-
-        let el: HTMLElement = document.querySelector((component.properties.__driver__ as Portal).selector)
-        el.replaceWith(engine.BuildDOMTree((component.properties.__driver__ as Portal).component))
-
-        return document.createComment("PE")
-
-    },
-
-    "html": (engine: RenderEngine, component: Component) => {
-
-        const HTMLData = component.properties.__driver__ as HTML
-        let element = document.createElement('div')
-        element.innerHTML = HTMLData.content.toString()
-
-        if (element.children.length > 1) {
-            return element
-        } else {
-            return element.children[0]
-        }
-
-    },
-
-    "empty": () => document.createComment('EM'),
-
-    "listview": (engine: RenderEngine, component: Component) => {
-
-        let element: HTMLElement
-
-        if ((component.properties.__driver__ as ListView<any>).parent != null) {
-            element = engine.BuildDOMTree((component.properties.__driver__ as ListView<any>).parent)
-        } else {
-            element = document.createElement('div')
-        }
-
-        engine.HandleListView((component.properties.__driver__ as ListView<any>), element)
-        return element
-
-    }
+export type Component = {
+    name: string,
+    properties: Properties,
+    hasChild: boolean,
 }
 
-export class Component {
 
-    name: string
-    properties: Properties
-    hasChild: boolean
 
-    constructor(name: string, properties: Properties = {}, hasChild = true) {
-        this.name = name
-        this.properties = properties
-        this.hasChild = hasChild
-    }
+export function Component(name: string, properties: Properties = {}, hasChild = true): Component {
 
-    build(engine: RenderEngine) {
-
-        if ( this.name != "portal" && this.name != "html" && this.name != "empty" && this.name != "listview") {
-            const el = document.createElement(this.name)
-            return el
-        } else {
-            return lookupTable[this.name](engine, this)
-        }
-
+    return {
+        name,
+        properties,
+        hasChild,
     }
 
 }
+
+// export class Component {
+
+//     name: string
+//     properties: Properties
+//     hasChild: boolean
+
+//     constructor(name: string, properties: Properties = {}, hasChild = true) {
+//         this.name = name
+//         this.properties = properties
+//         this.hasChild = hasChild
+//     }
+
+//     build(engine: RenderEngine) {
+
+//         if ( this.name != "portal" && this.name != "html" && this.name != "empty" && this.name != "listview") {
+//             const el = document.createElement(this.name)
+//             return el
+//         } else {
+//             return lookupTable[this.name](engine, this)
+//         }
+
+//     }
+
+// }
 /**
  * The idea is, whenever the $-directive is called, the callback is added to this set.
  * Then, the callback is called. If the callback has any stateful usage, it will then automatically fetch\
